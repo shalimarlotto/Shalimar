@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Shalimar Lotto - Results</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<!-- Firebase App (core SDK) -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<!-- Firebase Realtime Database -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 <style>
   :root{
     --bg1:#0b0710;
@@ -157,16 +161,59 @@
   .modal .row .col{ flex:1 }
   .modal .actions{ display:flex; gap:8px; justify-content:flex-end; margin-top:12px }
 
+  /* Firebase connection indicator */
+  .connection-status {
+    position: fixed;
+    bottom: 10px;
+    right: 10px;
+    padding: 8px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .online { background: rgba(46, 204, 113, 0.2); color: #2ecc71; }
+  .offline { background: rgba(231, 76, 60, 0.2); color: #e74c3c; }
+  .connection-status i { font-size: 14px; }
+
   /* small screens */
   @media (max-width:900px){
-    .result-cards{ grid-template-columns:1fr; }
+    .result-cards{ 
+      grid-template-columns: 1fr; 
+      grid-template-areas: 
+        "countdown"
+        "current"
+        "previous";
+    }
+    .result-card:nth-child(1) { grid-area: countdown; order: 1; }
+    .result-card:nth-child(2) { grid-area: current; order: 2; }
+    .result-card:nth-child(3) { grid-area: previous; order: 3; }
     .tabs{ flex-wrap:wrap; gap:10px }
     .satta-number{ font-size:48px }
     .session-number{ font-size:28px; width:48px; height:48px }
   }
+
+  /* Loading indicator */
+  .loader {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(255,255,255,0.3);
+    border-radius: 50%;
+    border-top-color: var(--accent);
+    animation: spin 1s ease-in-out infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
+  <div class="connection-status offline" id="connection-status">
+    <i class="fas fa-wifi"></i>
+    <span>Connecting...</span>
+  </div>
+
   <header>
     <div class="container">
       <div class="logo">
@@ -208,7 +255,6 @@
             <button class="history-btn" data-days="365">Full History (1 year)</button>
           </div>
 
-          <!-- CHANGED: Added Satta date/month/year search -->
           <div class="date-selector">
             <span style="color:var(--muted)">Or select specific date:</span>
             <select id="satta-year-select"></select>
@@ -216,7 +262,6 @@
             <select id="satta-day-select"></select>
             <button id="satta-date-search-btn" class="btn-primary">Search</button>
           </div>
-          <!-- /CHANGED -->
 
           <table class="history-table" aria-live="polite">
             <thead>
@@ -239,7 +284,6 @@
       </div>
 
       <div id="lottery-results-container">
-        <!-- CHANGED: wrap only live panels so we can hide them after 9 PM while keeping history visible -->
         <div class="result-cards" id="lottery-live-panels">
           <div class="result-card">
             <h3>Current Session</h3>
@@ -276,7 +320,6 @@
             <div class="result-time" style="margin-top:10px;color:var(--muted)">Minutes : Seconds</div>
           </div>
         </div>
-        <!-- /CHANGED -->
 
         <div class="history" style="margin-top:18px">
           <h3>Lottery History</h3>
@@ -320,6 +363,34 @@
   </div>
 
 <script>
+  // Firebase configuration
+  const firebaseConfig = {
+    apiKey: "AIzaSyBP9o45GhnaQMiwUF6NWqFkazQiwwX8ODg",
+    authDomain: "shalimar-lotto.firebaseapp.com",
+    databaseURL: "https://shalimar-lotto-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "shalimar-lotto",
+    storageBucket: "shalimar-lotto.appspot.com",
+    messagingSenderId: "867917147838",
+    appId: "1:867917147838:web:4e261eddba61de8087b8ef",
+    measurementId: "G-SYKWW3K50W"
+  };
+
+  // Initialize Firebase
+  firebase.initializeApp(firebaseConfig);
+  const database = firebase.database();
+
+  // Connection status indicator
+  const connectionStatus = document.getElementById('connection-status');
+  firebase.database().ref('.info/connected').on('value', (snapshot) => {
+    if (snapshot.val() === true) {
+      connectionStatus.className = 'connection-status online';
+      connectionStatus.innerHTML = '<i class="fas fa-wifi"></i><span>Online</span>';
+    } else {
+      connectionStatus.className = 'connection-status offline';
+      connectionStatus.innerHTML = '<i class="fas fa-wifi"></i><span>Offline</span>';
+    }
+  });
+
 /* -------------------------
   Utility: IST "now" function
    - returns a Date object representing current IST time
@@ -331,10 +402,10 @@ function nowIST() {
 }
 
 /* -------------------------
-  Storage keys & admin key
+  Database paths
 --------------------------*/
-const SATTA_KEY = 'shalimar_satta_history';       // stores daily satta {dateISO:result}
-const LOTTERY_KEY = 'shalimar_lottery_history';   // array of {dateISO, A,B,C, slot}
+const SATTA_PATH = 'satta';
+const LOTTERY_PATH = 'lottery';
 const ADMIN_SECRET = 'A7X9Q2LM0ZKF8Y3RB5TP1HJV6GC4WNED'; // change as needed
 
 /* -------------------------
@@ -379,15 +450,22 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
 });
 
 /* -------------------------
-  JSON helpers
+  Firebase Database helpers
 --------------------------*/
-function loadJSON(key, fallback){
-  try{ const v = localStorage.getItem(key); return v? JSON.parse(v): fallback; } catch(e){ return fallback; }
+function saveToFirebase(path, data) {
+  return database.ref(path).set(data);
 }
-function saveJSON(key,obj){ localStorage.setItem(key, JSON.stringify(obj)); }
+
+function readFromFirebase(path) {
+  return database.ref(path).once('value').then(snapshot => snapshot.val());
+}
+
+function listenToFirebase(path, callback) {
+  return database.ref(path).on('value', snapshot => callback(snapshot.val()));
+}
 
 /* -------------------------
-  One-year pruning helpers  // CHANGED
+  One-year pruning helpers
 --------------------------*/
 function oneYearCutoffIST(){
   const now = nowIST();
@@ -395,117 +473,62 @@ function oneYearCutoffIST(){
   cutoff.setFullYear(cutoff.getFullYear()-1);
   return cutoff;
 }
-function pruneLotteryToOneYear(){ // CHANGED
-  let lh = loadJSON(LOTTERY_KEY, []);
-  const cutoff = oneYearCutoffIST();
-  lh = lh.filter(e => new Date(e.dateISO) >= cutoff);
-  saveJSON(LOTTERY_KEY, lh);
-}
-function pruneSattaToOneYear(){ // CHANGED
-  let sh = loadJSON(SATTA_KEY, {});
-  const cutoff = oneYearCutoffIST().toISOString().slice(0,10);
-  const out = {};
-  Object.keys(sh).forEach(k => { if(k >= cutoff) out[k] = sh[k]; });
-  saveJSON(SATTA_KEY, out);
-}
-
-/* Ensure there is initial history (only once) */
-function ensureInitialHistory(){
-  // If lottery history doesn't exist, create a 1-year seeded history (but keep size reasonable)
-  let lh = loadJSON(LOTTERY_KEY, null);
-  if(!lh || !Array.isArray(lh) || lh.length===0){
-    lh = seedLotteryOneYear();
-    saveJSON(LOTTERY_KEY, lh);
-  }
-  // Satta: daily entries for 1 year
-  let sh = loadJSON(SATTA_KEY, null);
-  if(!sh || typeof sh !== 'object'){
-    sh = seedSattaOneYear();
-    saveJSON(SATTA_KEY, sh);
-  }
-  pruneLotteryToOneYear(); // CHANGED
-  pruneSattaToOneYear();   // CHANGED
-}
-function seedLotteryOneYear(){
-  const out = [];
-  const end = nowIST();
-  const start = new Date(end); start.setFullYear(end.getFullYear()-1);
-  for(let d = new Date(start); d <= end; d.setDate(d.getDate()+1)){
-    for(let h=9; h<21; h++){
-      for(let m=0; m<60; m+=15){
-        const dt = new Date(d); dt.setHours(h,m,0,0);
-        if(dt <= end){
-          out.push({
-            dateISO: dt.toISOString(),
-            A: Math.floor(Math.random()*10),
-            B: Math.floor(Math.random()*10),
-            C: Math.floor(Math.random()*10),
-            slot: `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`
-          });
-        }
-      }
-    }
-  }
-  // keep only last ~20000 entries just in case
-  if(out.length > 20000) return out.slice(out.length-20000);
-  return out;
-}
-function seedSattaOneYear(){
-  const out = {};
-  const end = nowIST();
-  const start = new Date(end); start.setFullYear(end.getFullYear()-1);
-  for(let d = new Date(start); d <= end; d.setDate(d.getDate()+1)){
-    const dt = new Date(d); dt.setHours(16,0,0,0);
-    if(dt <= end){
-      out[new Date(d).toISOString().slice(0,10)] = String(Math.floor(Math.random()*100)).padStart(2,'0');
-    }
-  }
-  return out;
-}
 
 /* -------------------------
-  Satta: daily result logic
+  Satta: daily result logic - UPDATED
+  Now shows today's result immediately if it exists in Firebase
 --------------------------*/
 function updateSattaDisplay(now){
-  const hh = now.getHours();
   const todayKey = now.toISOString().slice(0,10);
-  const sattaStore = loadJSON(SATTA_KEY,{});
-  if(hh >= 16){
-    // ensure today's result exists
-    if(!sattaStore[todayKey]){
-      sattaStore[todayKey] = String(Math.floor(Math.random()*100)).padStart(2,'0');
-      saveJSON(SATTA_KEY, sattaStore);
+  
+  // Check if today's result exists in Firebase
+  database.ref(`${SATTA_PATH}/${todayKey}`).once('value').then(snapshot => {
+    if (snapshot.exists()) {
+      const result = snapshot.val();
+      // Extract value if it's an object, otherwise use directly
+      const resultValue = typeof result === 'object' ? result.result || result.value || result.number : result;
+      todaySattaNumEl.textContent = resultValue;
+      sattaDateEl.textContent = now.toLocaleDateString('en-IN', { year:'numeric', month:'long', day:'numeric' });
+    } else {
+      todaySattaNumEl.textContent = 'XX';
+      sattaDateEl.textContent = 'Check after 4:00 PM';
     }
-    todaySattaNumEl.textContent = sattaStore[todayKey];
-    sattaDateEl.textContent = now.toLocaleDateString('en-IN', { year:'numeric', month:'long', day:'numeric' });
-  } else {
-    todaySattaNumEl.textContent = 'XX';
-    sattaDateEl.textContent = 'Check after 4:00 PM';
-  }
+  });
 }
 
-/* Generate satta history table (days or specific date)  // CHANGED */
+/* Generate satta history table (days or specific date) */
 function generateSattaHistory(days=7, specificDate=null){
-  const store = loadJSON(SATTA_KEY,{});
-  sattaHistoryTbody.innerHTML = '';
-  let keys = Object.keys(store).sort((a,b)=> b.localeCompare(a));
-  if(specificDate){
-    const key = specificDate.toISOString().slice(0,10);
-    keys = keys.filter(k => k === key);
-  } else {
-    keys = keys.slice(0, days);
-  }
-  if(keys.length===0){
-    sattaHistoryTbody.innerHTML = `<tr><td colspan="3" class="empty-result">No satta results available</td></tr>`;
-    return;
-  }
-  keys.forEach(k=>{
-    const dt = new Date(k);
-    const dateStr = dt.toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' });
-    const dow = dt.toLocaleDateString('en-IN', { weekday:'short' });
-    const row = document.createElement('tr');
-    row.innerHTML = `<td>${dateStr}</td><td>${store[k]}</td><td>${dow}</td>`;
-    sattaHistoryTbody.appendChild(row);
+  database.ref(SATTA_PATH).once('value').then(snapshot => {
+    const store = snapshot.val() || {};
+    sattaHistoryTbody.innerHTML = '';
+    let keys = Object.keys(store).sort((a,b)=> b.localeCompare(a));
+    
+    if(specificDate){
+      const key = specificDate.toISOString().slice(0,10);
+      keys = keys.filter(k => k === key);
+    } else {
+      keys = keys.slice(0, days);
+    }
+    
+    if(keys.length===0){
+      sattaHistoryTbody.innerHTML = `<tr><td colspan="3" class="empty-result">No satta results available</td></tr>`;
+      return;
+    }
+    
+    keys.forEach(k=>{
+      const dt = new Date(k);
+      const dateStr = dt.toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' });
+      const dow = dt.toLocaleDateString('en-IN', { weekday:'short' });
+      
+      // Extract result value (handle both object and simple value)
+      const resultData = store[k];
+      const resultValue = typeof resultData === 'object' ? 
+        resultData.result || resultData.value || resultData.number : resultData;
+      
+      const row = document.createElement('tr');
+      row.innerHTML = `<td>${dateStr}</td><td>${resultValue}</td><td>${dow}</td>`;
+      sattaHistoryTbody.appendChild(row);
+    });
   });
 }
 
@@ -514,17 +537,32 @@ function generateSattaHistory(days=7, specificDate=null){
 --------------------------*/
 function isWithinLotteryHours(now){
   const h = now.getHours();
+  const m = now.getMinutes();
+  // Allow 9:00 PM results to show for 14 minutes (until 9:14 PM)
+  if (h === 21 && m < 15) return true;
   return (h >= 9 && h < 21);
 }
-function isValidDrawSlot(dt){ // CHANGED: ensure only 0,15,30,45 minutes between 9-20:59
+
+function isValidDrawSlot(dt){
   const h = dt.getHours();
   const m = dt.getMinutes();
+  // Allow 9:00 PM draws to happen and stay visible
+  if (h === 21 && m === 0) return true;
   return (h >= 9 && h < 21) && (m % 15 === 0);
 }
 
 // returns next draw Date object in IST
 function nextDrawIST(now){
   const n = new Date(now);
+  
+  // Special handling for 9:00 PM - show next draw as tomorrow 9:00 AM
+  if (now.getHours() >= 21 && now.getMinutes() >= 15) {
+    const nxt = new Date(now);
+    nxt.setDate(nxt.getDate() + 1);
+    nxt.setHours(9, 0, 0, 0);
+    return nxt;
+  }
+  
   if(!isWithinLotteryHours(now)){
     // next is tomorrow 9:00 AM
     const nxt = new Date(now);
@@ -557,65 +595,97 @@ function flipDigit(containerId, newVal){
   }, 220);
 }
 
-/* Save lottery entry */
-function saveLotteryEntry(dt, A,B,C){
-  const history = loadJSON(LOTTERY_KEY, []);
-  history.push({
+/* Save lottery entry to Firebase */
+function saveLotteryEntry(dt, A, B, C){
+  const entry = {
     dateISO: dt.toISOString(),
     A, B, C,
     slot: `${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}`
-  });
-  // hard cap safety
-  if(history.length > 25000) history.splice(0, history.length - 25000);
-  saveJSON(LOTTERY_KEY, history);
+  };
+  
+  const key = dt.toISOString().replace(/[:.]/g, '-');
+  return database.ref(`${LOTTERY_PATH}/${key}`).set(entry);
 }
 
-/* Update current/previous displays from history (most recent entries) */
+/* Update current/previous displays from Firebase */
 function refreshCurrentFromHistory(){
-  const history = loadJSON(LOTTERY_KEY, []);
-  if(history.length === 0) return;
-  const now = nowIST();
-  const entries = history.filter(e => new Date(e.dateISO) <= now);
-  if(entries.length === 0) return;
-  const last = entries[entries.length-1];
-  const prev = entries.length > 1 ? entries[entries.length-2] : null;
-  flipDigit('flip-a', last.A);
-  flipDigit('flip-b', last.B);
-  flipDigit('flip-c', last.C);
-  currentA.textContent = last.A; currentB.textContent = last.B; currentC.textContent = last.C;
-  lotteryUpdateTime.textContent = new Date(last.dateISO).toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit', hour12:true });
-  if(prev){
-    prevA.textContent = prev.A; prevB.textContent = prev.B; prevC.textContent = prev.C;
-    previousLotteryTime.textContent = `Updated: ${new Date(prev.dateISO).toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit', hour12:true })}`;
-  }
+  database.ref(LOTTERY_PATH).orderByKey().limitToLast(2).once('value').then(snapshot => {
+    const entries = [];
+    snapshot.forEach(childSnapshot => {
+      entries.push(childSnapshot.val());
+    });
+    
+    if(entries.length === 0) return;
+    
+    // Sort by date (newest first)
+    entries.sort((a, b) => new Date(b.dateISO) - new Date(a.dateISO));
+    
+    const last = entries[0];
+    const prev = entries.length > 1 ? entries[1] : null;
+    
+    // Only update current if we have a valid recent result (within last 30 minutes)
+    const now = nowIST();
+    const lastDrawTime = new Date(last.dateISO);
+    const timeDiff = (now - lastDrawTime) / (1000 * 60); // difference in minutes
+    
+    if (timeDiff < 30) { // Only update if result is from last 30 minutes
+      flipDigit('flip-a', last.A);
+      flipDigit('flip-b', last.B);
+      flipDigit('flip-c', last.C);
+      currentA.textContent = last.A; 
+      currentB.textContent = last.B; 
+      currentC.textContent = last.C;
+      lotteryUpdateTime.textContent = new Date(last.dateISO).toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit', hour12:true });
+    }
+    
+    if(prev){
+      prevA.textContent = prev.A; 
+      prevB.textContent = prev.B; 
+      prevC.textContent = prev.C;
+      previousLotteryTime.textContent = `Updated: ${new Date(prev.dateISO).toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit', hour12:true })}`;
+    }
+  });
 }
 
-/* Generate today's or filtered lottery history */
+/* Generate today's or filtered lottery history from Firebase */
 function generateLotteryHistory(days=1, specificDate=null){
-  const history = loadJSON(LOTTERY_KEY, []);
-  lotteryHistoryTbody.innerHTML = '';
-  const now = nowIST();
-  let filtered = [];
-  if(specificDate){
-    const key = specificDate.toISOString().slice(0,10);
-    filtered = history.filter(e => e.dateISO.slice(0,10) === key);
-  } else {
-    const start = new Date(now); start.setDate(now.getDate() - (days-1));
-    start.setHours(0,0,0,0);
-    filtered = history.filter(e => new Date(e.dateISO) >= start);
-  }
-  filtered.reverse();
-  if(filtered.length === 0){
-    lotteryHistoryTbody.innerHTML = `<tr><td colspan="6" class="empty-result">No lottery results available for this period</td></tr>`;
-    return;
-  }
-  filtered.forEach(entry=>{
-    const dt = new Date(entry.dateISO);
-    const dStr = dt.toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' });
-    const tStr = dt.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit', hour12:true });
-    const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${dStr}</td><td>${tStr}</td><td>${entry.A}</td><td>${entry.B}</td><td>${entry.C}</td><td>${entry.slot}</td>`;
-    lotteryHistoryTbody.appendChild(tr);
+  lotteryHistoryTbody.innerHTML = '<tr><td colspan="6"><div style="text-align:center;padding:20px"><span class="loader"></span> Loading...</div></td></tr>';
+  
+  database.ref(LOTTERY_PATH).once('value').then(snapshot => {
+    const allEntries = [];
+    snapshot.forEach(childSnapshot => {
+      allEntries.push(childSnapshot.val());
+    });
+    
+    const now = nowIST();
+    let filtered = [];
+    
+    if(specificDate){
+      const key = specificDate.toISOString().slice(0,10);
+      filtered = allEntries.filter(e => e.dateISO.slice(0,10) === key);
+    } else {
+      const start = new Date(now); 
+      start.setDate(now.getDate() - (days-1));
+      start.setHours(0,0,0,0);
+      filtered = allEntries.filter(e => new Date(e.dateISO) >= start);
+    }
+    
+    filtered.sort((a, b) => new Date(b.dateISO) - new Date(a.dateISO));
+    lotteryHistoryTbody.innerHTML = '';
+    
+    if(filtered.length === 0){
+      lotteryHistoryTbody.innerHTML = `<tr><td colspan="6" class="empty-result">No lottery results available for this period</td></tr>`;
+      return;
+    }
+    
+    filtered.forEach(entry => {
+      const dt = new Date(entry.dateISO);
+      const dStr = dt.toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' });
+      const tStr = dt.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit', hour12:true });
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${dStr}</td><td>${tStr}</td><td>${entry.A}</td><td>${entry.B}</td><td>${entry.C}</td><td>${entry.slot}</td>`;
+      lotteryHistoryTbody.appendChild(tr);
+    });
   });
 }
 
@@ -623,16 +693,18 @@ function generateLotteryHistory(days=1, specificDate=null){
 function performDraw(manualDate=null, manualA=null, manualB=null, manualC=null){
   const now = manualDate ? new Date(manualDate) : nowIST();
   if(!isWithinLotteryHours(now) && !manualDate) return;
+  
   const A = manualA !== null ? manualA : Math.floor(Math.random()*10);
   const B = manualB !== null ? manualB : Math.floor(Math.random()*10);
   const C = manualC !== null ? manualC : Math.floor(Math.random()*10);
-  saveLotteryEntry(now, A, B, C);
-  pruneLotteryToOneYear(); // CHANGED
-  refreshCurrentFromHistory();
-  generateLotteryHistory(1);
+  
+  saveLotteryEntry(now, A, B, C).then(() => {
+    refreshCurrentFromHistory();
+    generateLotteryHistory(1);
+  });
 }
 
-/* Countdown update  // CHANGED: only hide live panels, keep history always visible */
+/* Countdown update */
 function updateCountdownAndNextTime(){
   const now = nowIST();
   const nxt = nextDrawIST(now);
@@ -642,9 +714,14 @@ function updateCountdownAndNextTime(){
   const ss = String(diff % 60).padStart(2,'0');
   countdownEl.textContent = `${mm}:${ss}`;
 
-  const livePanels = document.getElementById('lottery-live-panels'); // CHANGED
+  const livePanels = document.getElementById('lottery-live-panels');
   const closed = document.getElementById('lottery-closed-message');
-  if(isWithinLotteryHours(now)){
+  
+  // Show 9:00 PM results for 14 minutes
+  if (now.getHours() === 21 && now.getMinutes() < 15) {
+    if(livePanels) livePanels.style.display = 'grid';
+    closed.style.display='none';
+  } else if(isWithinLotteryHours(now)){
     if(livePanels) livePanels.style.display = 'grid';
     closed.style.display='none';
   } else {
@@ -653,7 +730,7 @@ function updateCountdownAndNextTime(){
   }
 }
 
-/* Initialize dropdowns for date search (reusable for satta/lottery)  // CHANGED */
+/* Initialize dropdowns for date search */
 function populateDateDropdowns(prefix){
   const yearSel = document.getElementById(`${prefix}-year-select`);
   const monthSel = document.getElementById(`${prefix}-month-select`);
@@ -683,35 +760,40 @@ function populateDateDropdowns(prefix){
 }
 
 /* -------------------------
-  Auto backfill missed draws (works even if no user was online)  // CHANGED
+  Auto backfill missed draws (works even if no user was online)
 --------------------------*/
 function backfillLottery(){ 
-  let history = loadJSON(LOTTERY_KEY, []);
   const now = nowIST();
   const cutoff = oneYearCutoffIST();
-  // Build a fast lookup of existing slot ISO strings
-  const existing = new Set(history.map(e => new Date(e.dateISO).toISOString().slice(0,16))); // yyyy-mm-ddThh:mm
-  const addEntry = (dt)=>{
-    const A = Math.floor(Math.random()*10);
-    const B = Math.floor(Math.random()*10);
-    const C = Math.floor(Math.random()*10);
-    saveLotteryEntry(dt, A, B, C);
-  };
-  // iterate day by day from cutoff to now
-  for(let d = new Date(cutoff); d <= now; d.setDate(d.getDate()+1)){
-    for(let h=9; h<21; h++){
-      for(let m=0; m<60; m+=15){
-        const dt = new Date(d); dt.setHours(h,m,0,0);
-        if(dt > now) break;
-        const key = dt.toISOString().slice(0,16);
-        if(!existing.has(key)){
-          addEntry(dt);
-          existing.add(key);
+  
+  database.ref(LOTTERY_PATH).once('value').then(snapshot => {
+    const existingEntries = snapshot.val() || {};
+    const existingKeys = Object.keys(existingEntries);
+    
+    // Build a fast lookup of existing slot ISO strings
+    const existing = new Set(existingKeys.map(key => {
+      const entry = existingEntries[key];
+      return new Date(entry.dateISO).toISOString().slice(0,16);
+    }));
+    
+    // iterate day by day from cutoff to now
+    for(let d = new Date(cutoff); d <= now; d.setDate(d.getDate()+1)){
+      for(let h=9; h<22; h++){ // Include 9:00 PM draws
+        for(let m=0; m<60; m+=15){
+          const dt = new Date(d); dt.setHours(h,m,0,0);
+          if(dt > now) break;
+          const key = dt.toISOString().slice(0,16);
+          if(!existing.has(key)){
+            const A = Math.floor(Math.random()*10);
+            const B = Math.floor(Math.random()*10);
+            const C = Math.floor(Math.random()*10);
+            saveLotteryEntry(dt, A, B, C);
+            existing.add(key);
+          }
         }
       }
     }
-  }
-  pruneLotteryToOneYear();
+  });
 }
 
 /* -------------------------
@@ -734,7 +816,7 @@ document.querySelectorAll('#lottery .history-btn').forEach(btn=>{
   });
 });
 
-/* Date search buttons (lottery & satta)  // CHANGED */
+/* Date search buttons (lottery & satta) */
 document.addEventListener('click', (e)=>{
   if(e.target && e.target.id === 'lottery-date-search-btn'){
     const y = Number(document.getElementById('lottery-year-select').value);
@@ -819,12 +901,12 @@ function openAdminPanel(){
       if(!/^\d{1,2}$/.test(sv)) { alert('Satta must be 00-99'); return; }
       const padded = String(Number(sv)).padStart(2,'0');
       const todayKey = nowIST().toISOString().slice(0,10);
-      const sh = loadJSON(SATTA_KEY,{});
-      sh[todayKey] = padded;
-      saveJSON(SATTA_KEY, sh);
-      updateSattaDisplay(nowIST());
-      generateSattaHistory(7);
-      alert('Satta updated');
+      
+      database.ref(`${SATTA_PATH}/${todayKey}`).set(padded).then(() => {
+        updateSattaDisplay(nowIST());
+        generateSattaHistory(7);
+        alert('Satta updated');
+      });
     }
     // Lottery manual
     const dtVal = document.getElementById('admin-lottery-dt').value;
@@ -836,11 +918,12 @@ function openAdminPanel(){
       const A = aVal !== '' ? Number(aVal) : Math.floor(Math.random()*10);
       const B = bVal !== '' ? Number(bVal) : Math.floor(Math.random()*10);
       const C = cVal !== '' ? Number(cVal) : Math.floor(Math.random()*10);
-      saveLotteryEntry(manualDt, A,B,C);
-      pruneLotteryToOneYear(); // CHANGED
-      refreshCurrentFromHistory();
-      generateLotteryHistory(1);
-      alert('Manual lottery draw saved');
+      
+      saveLotteryEntry(manualDt, A, B, C).then(() => {
+        refreshCurrentFromHistory();
+        generateLotteryHistory(1);
+        alert('Manual lottery draw saved');
+      });
     }
     closeModal();
   });
@@ -862,19 +945,40 @@ function tickAll(){
   refreshCurrentFromHistory();
 }
 
-/* schedule draws at exact 15-min marks; we check frequently and perform draw on transition */
-let lastDrawISO = null;
+/* NEW IMPROVED DRAW SCHEDULING SYSTEM */
+let lastDrawTime = null;
+
 function checkAndPerformDraw(){
   const now = nowIST();
+  
+  // Only run during lottery hours (including 9:00 PM)
   if(!isWithinLotteryHours(now)) return;
+  
   const minutes = now.getMinutes();
   const seconds = now.getSeconds();
-  if(minutes % 15 === 0 && seconds < 2){
-    const slotISO = new Date(now); slotISO.setSeconds(0,0);
-    const iso = slotISO.toISOString();
-    if(iso !== lastDrawISO){
-      performDraw(slotISO);
-      lastDrawISO = iso;
+  
+  // Check if it's a draw time (every 15 minutes)
+  if(minutes % 15 === 0 && seconds < 10) { // 10-second window for draws
+    // Create a timestamp for this draw slot
+    const drawTime = new Date(now);
+    drawTime.setSeconds(0, 0);
+    const drawTimeStr = drawTime.toISOString();
+    
+    // Only perform draw if we haven't done one for this slot yet
+    if(lastDrawTime !== drawTimeStr) {
+      // Check if this draw already exists in Firebase
+      const drawKey = drawTime.toISOString().replace(/[:.]/g, '-');
+      
+      database.ref(`${LOTTERY_PATH}/${drawKey}`).once('value').then(snapshot => {
+        if (!snapshot.exists()) {
+          // Draw doesn't exist yet, perform it
+          performDraw(drawTime);
+          lastDrawTime = drawTimeStr;
+        } else {
+          // Draw already exists, just update lastDrawTime
+          lastDrawTime = drawTimeStr;
+        }
+      });
     }
   }
 }
@@ -883,30 +987,56 @@ function checkAndPerformDraw(){
 function startIntervals(){
   tickAll();
   setInterval(tickAll, 1000); // clock & countdown
-  setInterval(checkAndPerformDraw, 800); // check draws frequently
-  setInterval(()=>{ refreshCurrentFromHistory(); generateLotteryHistory(1); }, 10000);
+  setInterval(checkAndPerformDraw, 5000); // check for draws every 5 seconds
+  setInterval(() => { refreshCurrentFromHistory(); generateLotteryHistory(1); }, 30000); // Refresh data every 30 seconds
+}
+
+/* -------------------------
+  Debug function to check Firebase structure
+--------------------------*/
+function debugFirebaseStructure() {
+  console.log("Checking Firebase structure...");
+  
+  // Check satta structure
+  database.ref(SATTA_PATH).once('value').then(snapshot => {
+    console.log("Satta data:", snapshot.val());
+    
+    // Check lottery structure
+  database.ref(LOTTERY_PATH).once('value').then(lotterySnapshot => {
+      console.log("Lottery data:", lotterySnapshot.val());
+    });
+  });
 }
 
 /* -------------------------
   Init
 --------------------------*/
 function init(){
-  ensureInitialHistory();
-  backfillLottery(); // CHANGED: fill any missed draws across the last year up to now
-  // show last saved results immediately
+  // Debug: Check Firebase structure
+  debugFirebaseStructure();
+  
+  // Listen for real-time updates
+  database.ref(LOTTERY_PATH).orderByKey().limitToLast(1).on('value', () => {
+    refreshCurrentFromHistory();
+  });
+  
+  database.ref(SATTA_PATH).on('value', () => {
+    updateSattaDisplay(nowIST());
+    generateSattaHistory(7);
+  });
+  
+  // Initial data load
+  backfillLottery();
   refreshCurrentFromHistory();
   generateLotteryHistory(1);
   generateSattaHistory(7);
-  populateDateDropdowns('lottery'); // CHANGED
-  populateDateDropdowns('satta');   // CHANGED
+  populateDateDropdowns('lottery');
+  populateDateDropdowns('satta');
   startIntervals();
 }
-init();
 
-/* Expose for debugging */
-window._shalimar = {
-  performDraw, saveLotteryEntry, loadJSON, saveJSON, backfillLottery
-};
+// Initialize after Firebase is ready
+setTimeout(init, 1000);
 </script>
 </body>
 </html>
