@@ -20,6 +20,7 @@
     --glass: rgba(255,255,255,0.04);
     --muted: rgba(255,255,255,0.65);
     --danger: #ff6b6b;
+    --success: #2ecc71;
   }
 
   *{box-sizing:border-box;margin:0;padding:0;font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif}
@@ -167,6 +168,21 @@
   .offline { background: rgba(231, 76, 60, 0.2); color: #e74c3c; }
   .connection-status i { font-size: 14px; }
 
+  /* Date validation warning */
+  .date-warning {
+    background: rgba(231, 76, 60, 0.15);
+    border: 1px solid rgba(231, 76, 60, 0.3);
+    border-radius: 8px;
+    padding: 12px;
+    margin: 15px 0;
+    text-align: center;
+    color: #ff9e9e;
+  }
+  .date-warning i {
+    color: var(--danger);
+    margin-right: 8px;
+  }
+
   /* small screens */
   @media (max-width:900px){
     .result-cards{ 
@@ -221,6 +237,12 @@
     <div class="current-time">
       <i class="fas fa-clock"></i>
       <div>Current Time (IST): <strong id="time">Loading...</strong></div>
+    </div>
+
+    <!-- Date validation warning -->
+    <div class="date-warning" id="date-warning" style="display: none;">
+      <i class="fas fa-exclamation-triangle"></i>
+      <span id="warning-text">System date validation issue detected. Results may be inaccurate.</span>
     </div>
 
     <!-- Satta Section -->
@@ -394,6 +416,8 @@ const LOTTERY_PATH = 'lottery';
 --------------------------*/
 const timeEl = document.getElementById('time');
 const yearNow = document.getElementById('yearNow'); yearNow.textContent = new Date().getFullYear();
+const dateWarning = document.getElementById('date-warning');
+const warningText = document.getElementById('warning-text');
 
 const todaySattaNumEl = document.getElementById('today-satta-number');
 const sattaDateEl = document.getElementById('satta-date');
@@ -413,6 +437,26 @@ const lotteryUpdateTime = document.getElementById('lottery-update-time');
 const previousLotteryTime = document.getElementById('previous-lottery-time');
 
 const lotteryHistoryTbody = document.getElementById('lottery-history');
+
+/* -------------------------
+  Date Validation - FIXED
+  This prevents future dates from being generated
+--------------------------*/
+function isValidDate(dt) {
+  const now = nowIST();
+  // Allow a small buffer for time synchronization (5 minutes)
+  const bufferTime = 5 * 60 * 1000; // 5 minutes in milliseconds
+  return dt.getTime() <= (now.getTime() + bufferTime);
+}
+
+function showDateWarning(message) {
+  warningText.textContent = message;
+  dateWarning.style.display = 'block';
+}
+
+function hideDateWarning() {
+  dateWarning.style.display = 'none';
+}
 
 /* -------------------------
   Tab switching
@@ -573,8 +617,17 @@ function flipDigit(containerId, newVal){
   }, 220);
 }
 
-/* Save lottery entry to Firebase */
+/* Save lottery entry to Firebase - FIXED with date validation */
 function saveLotteryEntry(dt, A, B, C){
+  // Validate date before saving
+  if (!isValidDate(dt)) {
+    console.error('Attempted to save future date:', dt);
+    showDateWarning('System date issue detected. Results may be inaccurate.');
+    return Promise.reject('Invalid future date');
+  }
+  
+  hideDateWarning();
+  
   const entry = {
     dateISO: dt.toISOString(),
     A, B, C,
@@ -667,9 +720,17 @@ function generateLotteryHistory(days=1, specificDate=null){
   });
 }
 
-/* Generate a new draw (executed at draw times OR via admin) */
+/* Generate a new draw (executed at draw times OR via admin) - FIXED with date validation */
 function performDraw(manualDate=null, manualA=null, manualB=null, manualC=null){
   const now = manualDate ? new Date(manualDate) : nowIST();
+  
+  // Validate date before proceeding
+  if (!isValidDate(now)) {
+    console.error('Attempted to perform draw with future date:', now);
+    showDateWarning('System date issue detected. Cannot generate results for future dates.');
+    return;
+  }
+  
   if(!isWithinLotteryHours(now) && !manualDate) return;
   
   const A = manualA !== null ? manualA : Math.floor(Math.random()*10);
@@ -679,6 +740,8 @@ function performDraw(manualDate=null, manualA=null, manualB=null, manualC=null){
   saveLotteryEntry(now, A, B, C).then(() => {
     refreshCurrentFromHistory();
     generateLotteryHistory(1);
+  }).catch(error => {
+    console.error('Error saving lottery entry:', error);
   });
 }
 
@@ -739,6 +802,7 @@ function populateDateDropdowns(prefix){
 
 /* -------------------------
   Auto backfill missed draws (works even if no user was online)
+  - FIXED with date validation
 --------------------------*/
 function backfillLottery(){ 
   const now = nowIST();
@@ -833,11 +897,19 @@ function debugFirebaseStructure() {
 
 /* -------------------------
   NEW IMPROVED DRAW SCHEDULING SYSTEM
+  - FIXED with date validation
 --------------------------*/
 let lastDrawTime = null;
 
 function checkAndPerformDraw(){
   const now = nowIST();
+  
+  // Validate date before proceeding
+  if (!isValidDate(now)) {
+    console.error('System date issue detected:', now);
+    showDateWarning('System date issue detected. Results may be inaccurate.');
+    return;
+  }
   
   // Only run during lottery hours (including 9:00 PM)
   if(!isWithinLotteryHours(now)) return;
