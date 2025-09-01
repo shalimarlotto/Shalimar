@@ -149,17 +149,6 @@
   .btn-primary{ padding:8px 14px; border-radius:999px; border:none; cursor:pointer; background: linear-gradient(90deg,var(--accent),var(--accent-dark)); color:#111827; font-weight:800 }
 
   footer{ margin-top:26px; text-align:center; padding:14px; color:var(--muted); font-size:13px }
-  footer .hidden-admin{ color:transparent; text-shadow: 0 0 0 rgba(255,255,255,0.12); cursor:pointer; display:inline-block }
-
-  /* modal */
-  .modal-backdrop{ position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:80; background: linear-gradient(0deg, rgba(0,0,0,0.6), rgba(0,0,0,0.6)) }
-  .modal{ width:90%; max-width:520px; background: linear-gradient(180deg, rgba(8,8,16,0.95), rgba(4,4,10,0.96)); border-radius:12px; padding:18px; box-shadow: 0 18px 60px rgba(0,0,0,0.7) }
-  .modal h3{ color:var(--accent); margin-bottom:10px }
-  .modal label{ display:block; margin-top:8px; color:var(--muted); font-weight:700 }
-  .modal input, .modal select{ width:100%; padding:10px 12px; margin-top:6px; border-radius:8px; border:none; background:rgba(255,255,255,0.03); color:#fff }
-  .modal .row{ display:flex; gap:8px }
-  .modal .row .col{ flex:1 }
-  .modal .actions{ display:flex; gap:8px; justify-content:flex-end; margin-top:12px }
 
   /* Firebase connection indicator */
   .connection-status {
@@ -350,17 +339,10 @@
     </section>
 
     <footer>
-      <div>© <span id="yearNow"></span> <span class="hidden-admin" id="hidden-admin-trigger" title="Click 3 times quickly">Instant Results</span> Shalimar Lotto. All rights reserved.</div>
+      <div>© <span id="yearNow"></span> Shalimar Lotto. All rights reserved.</div>
       <div class="disclaimer">This website is for entertainment purposes only. Please play responsibly.</div>
     </footer>
   </main>
-
-  <!-- Modals -->
-  <div class="modal-backdrop" id="modal-backdrop">
-    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
-      <div id="modal-content"></div>
-    </div>
-  </div>
 
 <script>
   // Firebase configuration
@@ -406,7 +388,6 @@ function nowIST() {
 --------------------------*/
 const SATTA_PATH = 'satta';
 const LOTTERY_PATH = 'lottery';
-const ADMIN_SECRET = 'A7X9Q2LM0ZKF8Y3RB5TP1HJV6GC4WNED'; // change as needed
 
 /* -------------------------
   DOM refs
@@ -432,9 +413,6 @@ const lotteryUpdateTime = document.getElementById('lottery-update-time');
 const previousLotteryTime = document.getElementById('previous-lottery-time');
 
 const lotteryHistoryTbody = document.getElementById('lottery-history');
-
-const modalBackdrop = document.getElementById('modal-backdrop');
-const modalContent = document.getElementById('modal-content');
 
 /* -------------------------
   Tab switching
@@ -837,115 +815,25 @@ document.addEventListener('click', (e)=>{
 });
 
 /* -------------------------
-  Admin: hidden trigger and modal content
+  Debug function to check Firebase structure
 --------------------------*/
-let adminClicks = 0, lastClickAt = 0;
-const adminTrigger = document.getElementById('hidden-admin-trigger');
-adminTrigger.addEventListener('click', ()=>{
-  const now = Date.now();
-  if(now - lastClickAt < 700) adminClicks++; else adminClicks = 1;
-  lastClickAt = now;
-  if(adminClicks >= 3) openAdminLogin();
-});
-
-function openModal(html){
-  modalContent.innerHTML = html;
-  modalBackdrop.style.display='flex';
-}
-function closeModal(){ modalBackdrop.style.display='none'; modalContent.innerHTML=''; }
-
-/* Admin login UI */
-function openAdminLogin(){
-  openModal(`
-    <h3 id="modal-title">Admin Login</h3>
-    <label>Enter Secret Key</label>
-    <input id="admin-key" type="password" placeholder="Secret Key" />
-    <div style="margin-top:10px;display:flex;gap:8px;justify-content:flex-end">
-      <button class="btn-primary" id="admin-submit">Unlock</button>
-      <button id="admin-cancel" style="padding:8px 12px;border-radius:8px;border:none;background:rgba(255,255,255,0.03);color:#fff">Cancel</button>
-    </div>
-  `);
-  document.getElementById('admin-cancel').addEventListener('click', closeModal);
-  document.getElementById('admin-submit').addEventListener('click', ()=>{
-    const v = document.getElementById('admin-key').value;
-    if(v === ADMIN_SECRET) { openAdminPanel(); } else { alert('Invalid key'); }
+function debugFirebaseStructure() {
+  console.log("Checking Firebase structure...");
+  
+  // Check satta structure
+  database.ref(SATTA_PATH).once('value').then(snapshot => {
+    console.log("Satta data:", snapshot.val());
+    
+    // Check lottery structure
+  database.ref(LOTTERY_PATH).once('value').then(lotterySnapshot => {
+      console.log("Lottery data:", lotterySnapshot.val());
+    });
   });
 }
-
-/* Admin panel UI for manual operations */
-function openAdminPanel(){
-  openModal(`
-    <h3>Admin Panel</h3>
-    <label>Manual Satta - Set today's result (00-99)</label>
-    <input id="admin-satta-val" placeholder="e.g. 07" maxlength="2" />
-    <label style="margin-top:8px">Manual Lottery - Set draw for specific date/time (IST)</label>
-    <div class="row">
-      <div class="col"><input id="admin-lottery-dt" type="datetime-local" /></div>
-    </div>
-    <div style="display:flex;gap:8px;margin-top:8px">
-      <input id="admin-lottery-a" placeholder="A (0-9)" maxlength="1" />
-      <input id="admin-lottery-b" placeholder="B (0-9)" maxlength="1" />
-      <input id="admin-lottery-c" placeholder="C (0-9)" maxlength="1" />
-    </div>
-    <div style="display:flex;gap:8px;margin-top:10px;justify-content:flex-end">
-      <button class="btn-primary" id="admin-save">Save</button>
-      <button id="admin-close" style="padding:8px 12px;border-radius:8px;border:none;background:rgba(255,255,255,0.03);color:#fff">Close</button>
-    </div>
-    <div style="margin-top:12px;color:var(--muted);font-size:13px">Manual draws are stored immediately and will reflect in history and current displays.</div>
-  `);
-  document.getElementById('admin-close').addEventListener('click', closeModal);
-  document.getElementById('admin-save').addEventListener('click', ()=>{
-    // Satta manual
-    const sv = document.getElementById('admin-satta-val').value.trim();
-    if(sv){
-      if(!/^\d{1,2}$/.test(sv)) { alert('Satta must be 00-99'); return; }
-      const padded = String(Number(sv)).padStart(2,'0');
-      const todayKey = nowIST().toISOString().slice(0,10);
-      
-      database.ref(`${SATTA_PATH}/${todayKey}`).set(padded).then(() => {
-        updateSattaDisplay(nowIST());
-        generateSattaHistory(7);
-        alert('Satta updated');
-      });
-    }
-    // Lottery manual
-    const dtVal = document.getElementById('admin-lottery-dt').value;
-    const aVal = document.getElementById('admin-lottery-a').value.trim();
-    const bVal = document.getElementById('admin-lottery-b').value.trim();
-    const cVal = document.getElementById('admin-lottery-c').value.trim();
-    if(dtVal && (aVal!=='' || bVal!=='' || cVal!=='')){
-      const manualDt = new Date(dtVal);
-      const A = aVal !== '' ? Number(aVal) : Math.floor(Math.random()*10);
-      const B = bVal !== '' ? Number(bVal) : Math.floor(Math.random()*10);
-      const C = cVal !== '' ? Number(cVal) : Math.floor(Math.random()*10);
-      
-      saveLotteryEntry(manualDt, A, B, C).then(() => {
-        refreshCurrentFromHistory();
-        generateLotteryHistory(1);
-        alert('Manual lottery draw saved');
-      });
-    }
-    closeModal();
-  });
-}
-
-/* close modal on backdrop click */
-modalBackdrop.addEventListener('click', (e)=>{
-  if(e.target === modalBackdrop) closeModal();
-});
 
 /* -------------------------
-  Timers: clock, countdown, scheduled draws
+  NEW IMPROVED DRAW SCHEDULING SYSTEM
 --------------------------*/
-function tickAll(){
-  const now = nowIST();
-  timeEl.textContent = now.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:true });
-  updateSattaDisplay(now);
-  updateCountdownAndNextTime();
-  refreshCurrentFromHistory();
-}
-
-/* NEW IMPROVED DRAW SCHEDULING SYSTEM */
 let lastDrawTime = null;
 
 function checkAndPerformDraw(){
@@ -992,20 +880,14 @@ function startIntervals(){
 }
 
 /* -------------------------
-  Debug function to check Firebase structure
+  Timers: clock, countdown, scheduled draws
 --------------------------*/
-function debugFirebaseStructure() {
-  console.log("Checking Firebase structure...");
-  
-  // Check satta structure
-  database.ref(SATTA_PATH).once('value').then(snapshot => {
-    console.log("Satta data:", snapshot.val());
-    
-    // Check lottery structure
-  database.ref(LOTTERY_PATH).once('value').then(lotterySnapshot => {
-      console.log("Lottery data:", lotterySnapshot.val());
-    });
-  });
+function tickAll(){
+  const now = nowIST();
+  timeEl.textContent = now.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:true });
+  updateSattaDisplay(now);
+  updateCountdownAndNextTime();
+  refreshCurrentFromHistory();
 }
 
 /* -------------------------
