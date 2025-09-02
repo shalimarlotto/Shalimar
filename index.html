@@ -281,6 +281,10 @@
             <tbody id="satta-history"></tbody>
           </table>
         </div>
+        <div class="date-warning" style="margin-top: 20px;">
+          <i class="fas fa-info-circle"></i>
+          <span>Satta results are announced daily at 4:00 PM IST</span>
+        </div>
       </div>
     </section>
 
@@ -628,10 +632,14 @@ function saveLotteryEntry(dt, A, B, C){
   
   hideDateWarning();
   
+  // Convert to IST for proper slot calculation
+  const istStr = dt.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' });
+  const istDate = new Date(istStr);
+  
   const entry = {
     dateISO: dt.toISOString(),
     A, B, C,
-    slot: `${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}`
+    slot: `${String(istDate.getHours()).padStart(2,'0')}:${String(istDate.getMinutes()).padStart(2,'0')}`
   };
   
   const key = dt.toISOString().replace(/[:.]/g, '-');
@@ -711,8 +719,13 @@ function generateLotteryHistory(days=1, specificDate=null){
     
     filtered.forEach(entry => {
       const dt = new Date(entry.dateISO);
-      const dStr = dt.toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' });
-      const tStr = dt.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit', hour12:true });
+      // Convert to IST for display
+      const istStr = dt.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' });
+      const istDate = new Date(istStr);
+      
+      const dStr = istDate.toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' });
+      const tStr = istDate.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit', hour12:true });
+      
       const tr = document.createElement('tr');
       tr.innerHTML = `<td>${dStr}</td><td>${tStr}</td><td>${entry.A}</td><td>${entry.B}</td><td>${entry.C}</td><td>${entry.slot}</td>`;
       lotteryHistoryTbody.appendChild(tr);
