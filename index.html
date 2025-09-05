@@ -5,10 +5,6 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Shalimar Lotto - Results</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<!-- Firebase App (core SDK) -->
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-<!-- Firebase Realtime Database -->
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 <style>
   :root{
     --bg1:#0b0710;
@@ -22,7 +18,6 @@
     --danger: #ff6b6b;
     --success: #2ecc71;
   }
-
   *{box-sizing:border-box;margin:0;padding:0;font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif}
   html,body{height:100%}
   body{
@@ -34,21 +29,16 @@
     -moz-osx-font-smoothing:grayscale;
     padding-bottom:60px;
   }
-
   .container{max-width:1120px;margin:0 auto;padding:18px}
-
   header{
     position:sticky;top:0;z-index:40;margin-bottom:10px;
     background: linear-gradient(180deg, rgba(0,0,0,0.45), rgba(0,0,0,0.12));
     border-radius:12px;padding:18px;backdrop-filter: blur(8px);
     box-shadow: 0 8px 30px rgba(0,0,0,0.6);
   }
-
   .logo{ text-align:center;margin-bottom:6px }
   .logo h1{ font-size:34px; color:var(--accent); text-shadow:0 6px 22px rgba(255,221,0,0.08); letter-spacing:1px }
   .logo p{ color:var(--muted); margin-top:6px; font-size:14px }
-
-  /* Centered session buttons (tabs) */
   .tabs{ display:flex; justify-content:center; gap:18px; margin-top:12px }
   .tab-btn{
     padding:12px 34px; border-radius:999px; font-weight:700; font-size:15px;
@@ -60,7 +50,6 @@
     background: linear-gradient(90deg,var(--accent),var(--accent-dark));
     color: #111827; box-shadow: 0 10px 30px rgba(255,140,0,0.12);
   }
-
   .current-time{
     margin:20px auto; max-width:880px; text-align:center;
     background: linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
@@ -69,22 +58,15 @@
     box-shadow: 0 8px 30px rgba(0,0,0,0.5);
   }
   .current-time i{ color:var(--accent) }
-
-  /* Sections */
   .result-section{
     margin-top:26px; background: linear-gradient(180deg, rgba(255,255,255,0.02), transparent);
     border-radius:14px; padding:22px; display:none; animation: fadeIn .5s ease both;
     box-shadow: 0 14px 40px rgba(6,6,12,0.6);
   }
   .result-section.active{ display:block }
-
   @keyframes fadeIn{ from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:none} }
-
   .section-title{ text-align:center; color:var(--accent); font-size:28px; margin-bottom:6px; text-shadow:0 6px 30px rgba(255,221,0,0.06) }
-
   .next-result{ text-align:center;color:var(--muted); margin-bottom:18px; font-weight:600 }
-
-  /* Satta */
   .satta-result-container{ display:flex; flex-direction:column; align-items:center; gap:20px }
   .today-satta-result{
     width:100%; max-width:540px; padding:22px;border-radius:14px;
@@ -98,22 +80,16 @@
     animation: pop 900ms cubic-bezier(.2,.9,.2,1);
   }
   @keyframes pop{ 0%{transform:scale(.92)} 60%{transform:scale(1.02)} 100%{transform:scale(1)} }
-
   .satta-date{ color: rgba(0,0,0,0.6); font-weight:600; margin-top:6px }
-
-  /* history table */
   .history{ margin-top:26px }
   .history h3{ text-align:center; color:var(--accent); margin-bottom:12px }
   .history-table{ width:100%; border-collapse:collapse; font-size:14px; overflow:hidden; border-radius:10px; background:var(--glass) }
   .history-table th, .history-table td{ padding:10px 12px; text-align:center; border-bottom:1px solid rgba(255,255,255,0.03) }
   .history-table th{ color:var(--accent); font-weight:700; background: linear-gradient(180deg, rgba(0,0,0,0.15), transparent) }
   .empty-result{ color:var(--danger); font-style:italic }
-
   .history-controls{ display:flex; gap:12px; justify-content:center; margin-bottom:12px; flex-wrap:wrap }
   .history-btn{ padding:8px 16px; border-radius:999px; border:none; cursor:pointer; background: rgba(255,255,255,0.03); color:#fff; font-weight:700 }
   .history-btn.active{ background: linear-gradient(90deg,var(--accent),var(--accent-dark)); color:#111827 }
-
-  /* Lottery Cards */
   .result-cards{ display:grid; grid-template-columns:repeat(3,1fr); gap:16px; align-items:start }
   .result-card{
     background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
@@ -121,7 +97,6 @@
   }
   .result-card h3{ color:var(--accent); margin-bottom:12px }
   .session-results{ display:flex; justify-content:center; gap:12px; align-items:center; flex-wrap:wrap }
-
   .session-card{ min-width:86px; border-radius:10px; padding:12px 10px; background:rgba(255,255,255,0.02) }
   .session-card h4{ color:var(--accent); margin-bottom:8px }
   .session-number{
@@ -130,8 +105,6 @@
     box-shadow: 0 8px 20px rgba(0,0,0,0.4);
     transform-style: preserve-3d;
   }
-
-  /* Flip animation for numbers */
   .flip { perspective:600px; display:inline-block; }
   .flip .face {
     display:block; border-radius:8px; min-width:56px;
@@ -140,18 +113,12 @@
   }
   .flip.flip-in .face { transform: rotateX(-90deg); }
   .flip.flip-out .face { transform: rotateX(0deg); }
-
   .result-number.big { font-size:34px; font-weight:900; color:var(--accent); padding:10px 14px; border-radius:10px; background:linear-gradient(90deg, rgba(255,221,0,0.06), rgba(255,115,0,0.03)); }
-
   .closed-message{ text-align:center;padding:20px;border-radius:12px;background: linear-gradient(90deg, rgba(255,255,255,0.02), transparent) }
-
   .date-selector{ display:flex; justify-content:center; gap:8px; align-items:center; margin:12px 0; flex-wrap:wrap }
   select,input[type="date"]{ padding:8px 12px; border-radius:999px; border:none; background:rgba(255,255,255,0.03); color:#fff; font-weight:600 }
   .btn-primary{ padding:8px 14px; border-radius:999px; border:none; cursor:pointer; background: linear-gradient(90deg,var(--accent),var(--accent-dark)); color:#111827; font-weight:800 }
-
   footer{ margin-top:26px; text-align:center; padding:14px; color:var(--muted); font-size:13px }
-
-  /* Firebase connection indicator */
   .connection-status {
     position: fixed;
     bottom: 10px;
@@ -167,8 +134,6 @@
   .online { background: rgba(46, 204, 113, 0.2); color: #2ecc71; }
   .offline { background: rgba(231, 76, 60, 0.2); color: #e74c3c; }
   .connection-status i { font-size: 14px; }
-
-  /* Date validation warning */
   .date-warning {
     background: rgba(231, 76, 60, 0.15);
     border: 1px solid rgba(231, 76, 60, 0.3);
@@ -182,8 +147,6 @@
     color: var(--danger);
     margin-right: 8px;
   }
-
-  /* small screens */
   @media (max-width:900px){
     .result-cards{ 
       grid-template-columns: 1fr; 
@@ -199,8 +162,6 @@
     .satta-number{ font-size:48px }
     .session-number{ font-size:28px; width:48px; height:48px }
   }
-
-  /* Loading indicator */
   .loader {
     display: inline-block;
     width: 20px;
@@ -218,45 +179,37 @@
     <i class="fas fa-wifi"></i>
     <span>Connecting...</span>
   </div>
-
   <header>
     <div class="container">
       <div class="logo">
         <h1>SHALIMAR LOTTO</h1>
         <p class="subtitle"><span style="color:var(--accent)">Instant Results</span> • Trusted Since 2010</p>
       </div>
-
       <div class="tabs">
         <button class="tab-btn active" data-tab="satta">Satta Result (4:00 PM)</button>
         <button class="tab-btn" data-tab="lottery">Lottery Result (Every 15 min)</button>
       </div>
     </div>
   </header>
-
   <main class="container">
     <div class="current-time">
       <i class="fas fa-clock"></i>
       <div>Current Time (IST): <strong id="time">Loading...</strong></div>
     </div>
-
-    <!-- Date validation warning -->
     <div class="date-warning" id="date-warning" style="display: none;">
       <i class="fas fa-exclamation-triangle"></i>
       <span id="warning-text">System date validation issue detected. Results may be inaccurate.</span>
     </div>
-
     <!-- Satta Section -->
     <section id="satta" class="result-section active">
       <h2 class="section-title">Satta Results</h2>
       <div class="next-result">Next Result: Today at <strong>4:00 PM IST</strong></div>
-
       <div class="satta-result-container">
         <div class="today-satta-result" aria-live="polite">
           <h3>Today's Satta Result</h3>
           <div class="satta-number" id="today-satta-number">--</div>
           <div class="satta-date" id="satta-date">Check after 4:00 PM</div>
         </div>
-
         <div class="history">
           <h3>Previous Results</h3>
           <div class="history-controls">
@@ -265,7 +218,6 @@
             <button class="history-btn" data-days="90">Last 90 Days</button>
             <button class="history-btn" data-days="365">Full History (1 year)</button>
           </div>
-
           <div class="date-selector">
             <span style="color:var(--muted)">Or select specific date:</span>
             <select id="satta-year-select"></select>
@@ -273,7 +225,6 @@
             <select id="satta-day-select"></select>
             <button id="satta-date-search-btn" class="btn-primary">Search</button>
           </div>
-
           <table class="history-table" aria-live="polite">
             <thead>
               <tr><th>Date</th><th>Result</th><th>Day</th></tr>
@@ -287,17 +238,14 @@
         </div>
       </div>
     </section>
-
     <!-- Lottery Section -->
     <section id="lottery" class="result-section">
       <h2 class="section-title">Lottery Results</h2>
       <div class="next-result">Next Result: <strong id="next-lottery-time">Calculating...</strong></div>
-
       <div id="lottery-closed-message" class="closed-message" style="display:none">
         <h3><i class="fas fa-moon"></i> Lottery Closed</h3>
         <p>Lottery results are available from <strong>9:00 AM</strong> to <strong>9:00 PM IST</strong>.</p>
       </div>
-
       <div id="lottery-results-container">
         <div class="result-cards" id="lottery-live-panels">
           <div class="result-card">
@@ -318,7 +266,6 @@
             </div>
             <div class="result-time" style="margin-top:12px;color:var(--muted)">Updated: <span id="lottery-update-time">-</span></div>
           </div>
-
           <div class="result-card">
             <h3>Previous Session</h3>
             <div class="session-results">
@@ -328,24 +275,20 @@
             </div>
             <div class="result-time" id="previous-lottery-time" style="margin-top:12px;color:var(--muted)">-</div>
           </div>
-
           <div class="result-card">
             <h3>Next Draw In</h3>
             <div class="result-number big" id="countdown">--:--</div>
             <div class="result-time" style="margin-top:10px;color:var(--muted)">Minutes : Seconds</div>
           </div>
         </div>
-
         <div class="history" style="margin-top:18px">
           <h3>Lottery History</h3>
-
           <div class="history-controls">
             <button class="history-btn active" data-days="1">Today</button>
             <button class="history-btn" data-days="7">Last 7 Days</button>
             <button class="history-btn" data-days="30">Last 30 Days</button>
             <button class="history-btn" data-days="365">Full History (1 year)</button>
           </div>
-
           <div class="date-selector">
             <span style="color:var(--muted)">Or select specific date:</span>
             <select id="lottery-year-select"></select>
@@ -353,7 +296,6 @@
             <select id="lottery-day-select"></select>
             <button id="lottery-date-search-btn" class="btn-primary">Search</button>
           </div>
-
           <table class="history-table">
             <thead>
               <tr><th>Date</th><th>Time</th><th>Session A</th><th>Session B</th><th>Session C</th><th>Slot</th></tr>
@@ -363,63 +305,38 @@
         </div>
       </div>
     </section>
-
     <footer>
       <div>© <span id="yearNow"></span> Shalimar Lotto. All rights reserved.</div>
       <div class="disclaimer">This website is for entertainment purposes only. Please play responsibly.</div>
     </footer>
   </main>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
+import { getDatabase, ref, onValue, set, get } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-database.js";
 
-<script>
-  // Firebase configuration
-  const firebaseConfig = {
-    apiKey: "AIzaSyBP9o45GhnaQMiwUF6NWqFkazQiwwX8ODg",
-    authDomain: "shalimar-lotto.firebaseapp.com",
-    databaseURL: "https://shalimar-lotto-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "shalimar-lotto",
-    storageBucket: "shalimar-lotto.appspot.com",
-    messagingSenderId: "867917147838",
-    appId: "1:867917147838:web:4e261eddba61de8087b8ef",
-    measurementId: "G-SYKWW3K50W"
-  };
+const firebaseConfig = {
+  apiKey: "AIzaSyCXh8qfMPANNwHtrxDMG6rNGAvh-dyZFQc",
+  authDomain: "database-lotto.firebaseapp.com",
+  databaseURL: "https://database-lotto-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "database-lotto",
+  storageBucket: "database-lotto.firebasestorage.app",
+  messagingSenderId: "349794805518",
+  appId: "1:349794805518:web:b37c6f4559ee1b29d0995f",
+  measurementId: "G-M5GE093GRF"
+};
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
 
-  // Initialize Firebase
-  firebase.initializeApp(firebaseConfig);
-  const database = firebase.database();
-
-  // Connection status indicator
-  const connectionStatus = document.getElementById('connection-status');
-  firebase.database().ref('.info/connected').on('value', (snapshot) => {
-    if (snapshot.val() === true) {
-      connectionStatus.className = 'connection-status online';
-      connectionStatus.innerHTML = '<i class="fas fa-wifi"></i><span>Online</span>';
-    } else {
-      connectionStatus.className = 'connection-status offline';
-      connectionStatus.innerHTML = '<i class="fas fa-wifi"></i><span>Offline</span>';
-    }
-  });
-
-/* -------------------------
-  Utility: IST "now" function
-   - returns a Date object representing current IST time
---------------------------*/
 function nowIST() {
-  // Create a string in IST timezone then convert back to Date to avoid user's local TZ issues
   const istStr = new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' });
   return new Date(istStr);
 }
-
-/* -------------------------
-  Database paths
---------------------------*/
+const connectionStatus = document.getElementById('connection-status');
 const SATTA_PATH = 'satta';
 const LOTTERY_PATH = 'lottery';
 
-/* -------------------------
-  DOM refs
---------------------------*/
 const timeEl = document.getElementById('time');
-const yearNow = document.getElementById('yearNow'); yearNow.textContent = new Date().getFullYear();
+const yearNow = document.getElementById('yearNow'); if(yearNow) yearNow.textContent = new Date().getFullYear();
 const dateWarning = document.getElementById('date-warning');
 const warningText = document.getElementById('warning-text');
 
@@ -439,32 +356,34 @@ const prevC = document.getElementById('previous-lottery-c');
 
 const lotteryUpdateTime = document.getElementById('lottery-update-time');
 const previousLotteryTime = document.getElementById('previous-lottery-time');
-
 const lotteryHistoryTbody = document.getElementById('lottery-history');
 
-/* -------------------------
-  Date Validation - FIXED
-  This prevents future dates from being generated
---------------------------*/
+onValue(ref(db, '.info/connected'), (snapshot) => {
+  if(snapshot.val()) {
+    connectionStatus.className = 'connection-status online';
+    connectionStatus.innerHTML = '<i class="fas fa-wifi"></i><span>Online</span>';
+  } else {
+    connectionStatus.className = 'connection-status offline';
+    connectionStatus.innerHTML = '<i class="fas fa-wifi"></i><span>Connecting...</span>';
+  }
+});
+
 function isValidDate(dt) {
   const now = nowIST();
-  // Allow a small buffer for time synchronization (5 minutes)
-  const bufferTime = 5 * 60 * 1000; // 5 minutes in milliseconds
+  const bufferTime = 5 * 60 * 1000;
   return dt.getTime() <= (now.getTime() + bufferTime);
 }
-
 function showDateWarning(message) {
-  warningText.textContent = message;
-  dateWarning.style.display = 'block';
+  if(warningText && dateWarning) {
+    warningText.textContent = message;
+    dateWarning.style.display = 'block';
+  }
 }
-
 function hideDateWarning() {
-  dateWarning.style.display = 'none';
+  if(dateWarning) dateWarning.style.display = 'none';
 }
 
-/* -------------------------
-  Tab switching
---------------------------*/
+/* Tab switching */
 document.querySelectorAll('.tab-btn').forEach(btn=>{
   btn.addEventListener('click',()=>{
     document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
@@ -475,82 +394,44 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
   });
 });
 
-/* -------------------------
-  Firebase Database helpers
---------------------------*/
-function saveToFirebase(path, data) {
-  return database.ref(path).set(data);
-}
-
-function readFromFirebase(path) {
-  return database.ref(path).once('value').then(snapshot => snapshot.val());
-}
-
-function listenToFirebase(path, callback) {
-  return database.ref(path).on('value', snapshot => callback(snapshot.val()));
-}
-
-/* -------------------------
-  One-year pruning helpers
---------------------------*/
-function oneYearCutoffIST(){
-  const now = nowIST();
-  const cutoff = new Date(now);
-  cutoff.setFullYear(cutoff.getFullYear()-1);
-  return cutoff;
-}
-
-/* -------------------------
-  Satta: daily result logic - UPDATED
-  Now shows today's result immediately if it exists in Firebase
---------------------------*/
+/* Satta display */
 function updateSattaDisplay(now){
   const todayKey = now.toISOString().slice(0,10);
-  
-  // Check if today's result exists in Firebase
-  database.ref(`${SATTA_PATH}/${todayKey}`).once('value').then(snapshot => {
+  get(ref(db, `${SATTA_PATH}/${todayKey}`)).then(snapshot => {
     if (snapshot.exists()) {
       const result = snapshot.val();
-      // Extract value if it's an object, otherwise use directly
       const resultValue = typeof result === 'object' ? result.result || result.value || result.number : result;
-      todaySattaNumEl.textContent = resultValue;
-      sattaDateEl.textContent = now.toLocaleDateString('en-IN', { year:'numeric', month:'long', day:'numeric' });
+      if(todaySattaNumEl) todaySattaNumEl.textContent = resultValue;
+      if(sattaDateEl) sattaDateEl.textContent = now.toLocaleDateString('en-IN', { year:'numeric', month:'long', day:'numeric' });
     } else {
-      todaySattaNumEl.textContent = 'XX';
-      sattaDateEl.textContent = 'Check after 4:00 PM';
+      if(todaySattaNumEl) todaySattaNumEl.textContent = 'XX';
+      if(sattaDateEl) sattaDateEl.textContent = 'Check after 4:00 PM';
     }
   });
 }
 
-/* Generate satta history table (days or specific date) */
 function generateSattaHistory(days=7, specificDate=null){
-  database.ref(SATTA_PATH).once('value').then(snapshot => {
+  get(ref(db, SATTA_PATH)).then(snapshot => {
     const store = snapshot.val() || {};
-    sattaHistoryTbody.innerHTML = '';
+    if(sattaHistoryTbody) sattaHistoryTbody.innerHTML = '';
     let keys = Object.keys(store).sort((a,b)=> b.localeCompare(a));
-    
     if(specificDate){
       const key = specificDate.toISOString().slice(0,10);
       keys = keys.filter(k => k === key);
     } else {
       keys = keys.slice(0, days);
     }
-    
     if(keys.length===0){
-      sattaHistoryTbody.innerHTML = `<tr><td colspan="3" class="empty-result">No satta results available</td></tr>`;
+      if(sattaHistoryTbody) sattaHistoryTbody.innerHTML = `<tr><td colspan="3" class="empty-result">No satta results available</td></tr>`;
       return;
     }
-    
     keys.forEach(k=>{
       const dt = new Date(k);
       const dateStr = dt.toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' });
       const dow = dt.toLocaleDateString('en-IN', { weekday:'short' });
-      
-      // Extract result value (handle both object and simple value)
       const resultData = store[k];
       const resultValue = typeof resultData === 'object' ? 
         resultData.result || resultData.value || resultData.number : resultData;
-      
       const row = document.createElement('tr');
       row.innerHTML = `<td>${dateStr}</td><td>${resultValue}</td><td>${dow}</td>`;
       sattaHistoryTbody.appendChild(row);
@@ -558,41 +439,30 @@ function generateSattaHistory(days=7, specificDate=null){
   });
 }
 
-/* -------------------------
-  Lottery utilities
---------------------------*/
+/**
+ * UPDATED: Show results until 9:14 PM IST
+ */
 function isWithinLotteryHours(now){
   const h = now.getHours();
   const m = now.getMinutes();
-  // Allow 9:00 PM results to show for 14 minutes (until 9:14 PM)
-  if (h === 21 && m < 15) return true;
+  // Allow results to show until 9:14 PM IST (21:14)
+  if (h === 21 && m < 14) return true;
   return (h >= 9 && h < 21);
 }
 
-function isValidDrawSlot(dt){
-  const h = dt.getHours();
-  const m = dt.getMinutes();
-  // Allow 9:00 PM draws to happen and stay visible
-  if (h === 21 && m === 0) return true;
-  return (h >= 9 && h < 21) && (m % 15 === 0);
-}
-
-// returns next draw Date object in IST
+/* nextDrawIST unchanged, but adjust if after 21:14 PM IST */
 function nextDrawIST(now){
   const n = new Date(now);
-  
-  // Special handling for 9:00 PM - show next draw as tomorrow 9:00 AM
-  if (now.getHours() >= 21 && now.getMinutes() >= 15) {
+  // If after 9:14 PM, show next at 9:00 AM next day
+  if (now.getHours() > 21 || (now.getHours() === 21 && now.getMinutes() >= 14)) {
     const nxt = new Date(now);
     nxt.setDate(nxt.getDate() + 1);
     nxt.setHours(9, 0, 0, 0);
     return nxt;
   }
-  
   if(!isWithinLotteryHours(now)){
-    // next is tomorrow 9:00 AM
     const nxt = new Date(now);
-    nxt.setDate(nxt.getDate() + 1);
+    nxt.setDate(now.getDate() + 1);
     nxt.setHours(9,0,0,0);
     return nxt;
   }
@@ -609,7 +479,6 @@ function nextDrawIST(now){
   }
 }
 
-/* Flip animation helper */
 function flipDigit(containerId, newVal){
   const container = document.getElementById(containerId);
   if(!container) return;
@@ -621,53 +490,83 @@ function flipDigit(containerId, newVal){
   }, 220);
 }
 
-/* Save lottery entry to Firebase - FIXED with date validation */
-function saveLotteryEntry(dt, A, B, C){
-  // Validate date before saving
-  if (!isValidDate(dt)) {
-    console.error('Attempted to save future date:', dt);
-    showDateWarning('System date issue detected. Results may be inaccurate.');
-    return Promise.reject('Invalid future date');
-  }
-  
-  hideDateWarning();
-  
-  // Convert to IST for proper slot calculation
-  const istStr = dt.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' });
-  const istDate = new Date(istStr);
-  
-  const entry = {
-    dateISO: dt.toISOString(),
-    A, B, C,
-    slot: `${String(istDate.getHours()).padStart(2,'0')}:${String(istDate.getMinutes()).padStart(2,'0')}`
-  };
-  
-  const key = dt.toISOString().replace(/[:.]/g, '-');
-  return database.ref(`${LOTTERY_PATH}/${key}`).set(entry);
+/* Only show results from 9am to 9:14pm */
+function isResultInLotteryHours(entryDate) {
+  const h = entryDate.getHours();
+  const m = entryDate.getMinutes();
+  // Accept results only until 9:14 PM IST
+  if (h === 21 && m < 14) return true;
+  return h >= 9 && h < 21;
 }
 
-/* Update current/previous displays from Firebase */
-function refreshCurrentFromHistory(){
-  database.ref(LOTTERY_PATH).orderByKey().limitToLast(2).once('value').then(snapshot => {
-    const entries = [];
-    snapshot.forEach(childSnapshot => {
-      entries.push(childSnapshot.val());
+function generateLotteryHistory(days=1, specificDate=null){
+  lotteryHistoryTbody.innerHTML = '<tr><td colspan="6"><div style="text-align:center;padding:20px"><span class="loader"></span> Loading...</div></td></tr>';
+  get(ref(db, LOTTERY_PATH)).then(snapshot => {
+    const allEntries = [];
+    if(snapshot.exists()) {
+      Object.values(snapshot.val()).forEach(entry => allEntries.push(entry));
+    }
+    const now = nowIST();
+    let filtered = [];
+    if(specificDate){
+      const key = specificDate.toISOString().slice(0,10);
+      filtered = allEntries.filter(e => {
+        const entryDate = new Date(e.dateISO);
+        return e.dateISO.slice(0,10) === key && isResultInLotteryHours(entryDate);
+      });
+    } else {
+      const start = new Date(now); 
+      start.setDate(now.getDate() - (days-1));
+      start.setHours(0,0,0,0);
+      filtered = allEntries.filter(e => {
+        const entryDate = new Date(e.dateISO);
+        return entryDate >= start && isResultInLotteryHours(entryDate);
+      });
+    }
+    filtered.sort((a, b) => new Date(b.dateISO) - new Date(a.dateISO));
+    lotteryHistoryTbody.innerHTML = '';
+    if(filtered.length === 0){
+      lotteryHistoryTbody.innerHTML = `<tr><td colspan="6" class="empty-result">No lottery results available for this period</td></tr>`;
+      return;
+    }
+    filtered.forEach(entry => {
+      const dt = new Date(entry.dateISO);
+      const istStr = dt.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' });
+      const istDate = new Date(istStr);
+      const dStr = istDate.toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' });
+      const tStr = istDate.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit', hour12:true });
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${dStr}</td><td>${tStr}</td><td>${entry.A}</td><td>${entry.B}</td><td>${entry.C}</td><td>${entry.slot}</td>`;
+      lotteryHistoryTbody.appendChild(tr);
     });
-    
+  });
+}
+
+function refreshCurrentFromHistory(){
+  const now = nowIST();
+  if (!isWithinLotteryHours(now)) {
+    currentA.textContent = "Closed";
+    currentB.textContent = "Closed";
+    currentC.textContent = "Closed";
+    lotteryUpdateTime.textContent = "Next draws: 9:00 AM to 9:00 PM IST";
+    prevA.textContent = "Closed";
+    prevB.textContent = "Closed";
+    prevC.textContent = "Closed";
+    previousLotteryTime.textContent = "Next draws: 9:00 AM to 9:00 PM IST";
+    return;
+  }
+  get(ref(db, LOTTERY_PATH)).then(snapshot => {
+    const entries = [];
+    if(snapshot.exists()) {
+      Object.values(snapshot.val()).forEach(entry => entries.push(entry));
+    }
     if(entries.length === 0) return;
-    
-    // Sort by date (newest first)
     entries.sort((a, b) => new Date(b.dateISO) - new Date(a.dateISO));
-    
     const last = entries[0];
     const prev = entries.length > 1 ? entries[1] : null;
-    
-    // Only update current if we have a valid recent result (within last 30 minutes)
-    const now = nowIST();
     const lastDrawTime = new Date(last.dateISO);
-    const timeDiff = (now - lastDrawTime) / (1000 * 60); // difference in minutes
-    
-    if (timeDiff < 30) { // Only update if result is from last 30 minutes
+    const timeDiff = (now - lastDrawTime) / (1000 * 60);
+    if (timeDiff < 30) {
       flipDigit('flip-a', last.A);
       flipDigit('flip-b', last.B);
       flipDigit('flip-c', last.C);
@@ -676,7 +575,6 @@ function refreshCurrentFromHistory(){
       currentC.textContent = last.C;
       lotteryUpdateTime.textContent = new Date(last.dateISO).toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit', hour12:true });
     }
-    
     if(prev){
       prevA.textContent = prev.A; 
       prevB.textContent = prev.B; 
@@ -686,79 +584,6 @@ function refreshCurrentFromHistory(){
   });
 }
 
-/* Generate today's or filtered lottery history from Firebase */
-function generateLotteryHistory(days=1, specificDate=null){
-  lotteryHistoryTbody.innerHTML = '<tr><td colspan="6"><div style="text-align:center;padding:20px"><span class="loader"></span> Loading...</div></td></tr>';
-  
-  database.ref(LOTTERY_PATH).once('value').then(snapshot => {
-    const allEntries = [];
-    snapshot.forEach(childSnapshot => {
-      allEntries.push(childSnapshot.val());
-    });
-    
-    const now = nowIST();
-    let filtered = [];
-    
-    if(specificDate){
-      const key = specificDate.toISOString().slice(0,10);
-      filtered = allEntries.filter(e => e.dateISO.slice(0,10) === key);
-    } else {
-      const start = new Date(now); 
-      start.setDate(now.getDate() - (days-1));
-      start.setHours(0,0,0,0);
-      filtered = allEntries.filter(e => new Date(e.dateISO) >= start);
-    }
-    
-    filtered.sort((a, b) => new Date(b.dateISO) - new Date(a.dateISO));
-    lotteryHistoryTbody.innerHTML = '';
-    
-    if(filtered.length === 0){
-      lotteryHistoryTbody.innerHTML = `<tr><td colspan="6" class="empty-result">No lottery results available for this period</td></tr>`;
-      return;
-    }
-    
-    filtered.forEach(entry => {
-      const dt = new Date(entry.dateISO);
-      // Convert to IST for display
-      const istStr = dt.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' });
-      const istDate = new Date(istStr);
-      
-      const dStr = istDate.toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' });
-      const tStr = istDate.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit', hour12:true });
-      
-      const tr = document.createElement('tr');
-      tr.innerHTML = `<td>${dStr}</td><td>${tStr}</td><td>${entry.A}</td><td>${entry.B}</td><td>${entry.C}</td><td>${entry.slot}</td>`;
-      lotteryHistoryTbody.appendChild(tr);
-    });
-  });
-}
-
-/* Generate a new draw (executed at draw times OR via admin) - FIXED with date validation */
-function performDraw(manualDate=null, manualA=null, manualB=null, manualC=null){
-  const now = manualDate ? new Date(manualDate) : nowIST();
-  
-  // Validate date before proceeding
-  if (!isValidDate(now)) {
-    console.error('Attempted to perform draw with future date:', now);
-    showDateWarning('System date issue detected. Cannot generate results for future dates.');
-    return;
-  }
-  
-  if(!isWithinLotteryHours(now) && !manualDate) return;
-  
-  const A = manualA !== null ? manualA : Math.floor(Math.random()*10);
-  const B = manualB !== null ? manualB : Math.floor(Math.random()*10);
-  const C = manualC !== null ? manualC : Math.floor(Math.random()*10);
-  
-  saveLotteryEntry(now, A, B, C).then(() => {
-    refreshCurrentFromHistory();
-    generateLotteryHistory(1);
-  }).catch(error => {
-    console.error('Error saving lottery entry:', error);
-  });
-}
-
-/* Countdown update */
 function updateCountdownAndNextTime(){
   const now = nowIST();
   const nxt = nextDrawIST(now);
@@ -767,15 +592,10 @@ function updateCountdownAndNextTime(){
   const mm = String(Math.floor(diff/60)).padStart(2,'0');
   const ss = String(diff % 60).padStart(2,'0');
   countdownEl.textContent = `${mm}:${ss}`;
-
   const livePanels = document.getElementById('lottery-live-panels');
   const closed = document.getElementById('lottery-closed-message');
-  
-  // Show 9:00 PM results for 14 minutes
-  if (now.getHours() === 21 && now.getMinutes() < 15) {
-    if(livePanels) livePanels.style.display = 'grid';
-    closed.style.display='none';
-  } else if(isWithinLotteryHours(now)){
+  // If within extended hours, show results
+  if (isWithinLotteryHours(now)) {
     if(livePanels) livePanels.style.display = 'grid';
     closed.style.display='none';
   } else {
@@ -784,226 +604,22 @@ function updateCountdownAndNextTime(){
   }
 }
 
-/* Initialize dropdowns for date search */
-function populateDateDropdowns(prefix){
-  const yearSel = document.getElementById(`${prefix}-year-select`);
-  const monthSel = document.getElementById(`${prefix}-month-select`);
-  const daySel = document.getElementById(`${prefix}-day-select`);
-  const now = nowIST();
-  if(!yearSel || !monthSel || !daySel) return;
-
-  yearSel.innerHTML = '';
-  for(let y = now.getFullYear(); y >= now.getFullYear()-2; y--){
-    const opt = document.createElement('option'); opt.value=y; opt.textContent=y; yearSel.appendChild(opt);
-  }
-  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-  monthSel.innerHTML = '';
-  months.forEach((m,i)=>{ const o=document.createElement('option'); o.value=i+1; o.textContent=m; if(i===now.getMonth()) o.selected=true; monthSel.appendChild(o) });
-  function fillDays(){
-    const y = Number(yearSel.value); const mo = Number(monthSel.value);
-    const days = new Date(y, mo, 0).getDate();
-    daySel.innerHTML='';
-    for(let d=1; d<=days; d++){
-      const o=document.createElement('option'); o.value=d; o.textContent=d;
-      if(d===now.getDate() && mo===now.getMonth()+1 && y===now.getFullYear()) o.selected=true;
-      daySel.appendChild(o);
-    }
-  }
-  yearSel.addEventListener('change', fillDays); monthSel.addEventListener('change', fillDays);
-  fillDays();
-}
-
-/* -------------------------
-  Auto backfill missed draws (works even if no user was online)
-  - FIXED with date validation
---------------------------*/
-function backfillLottery(){ 
-  const now = nowIST();
-  const cutoff = oneYearCutoffIST();
-  
-  database.ref(LOTTERY_PATH).once('value').then(snapshot => {
-    const existingEntries = snapshot.val() || {};
-    const existingKeys = Object.keys(existingEntries);
-    
-    // Build a fast lookup of existing slot ISO strings
-    const existing = new Set(existingKeys.map(key => {
-      const entry = existingEntries[key];
-      return new Date(entry.dateISO).toISOString().slice(0,16);
-    }));
-    
-    // iterate day by day from cutoff to now
-    for(let d = new Date(cutoff); d <= now; d.setDate(d.getDate()+1)){
-      for(let h=9; h<22; h++){ // Include 9:00 PM draws
-        for(let m=0; m<60; m+=15){
-          const dt = new Date(d); dt.setHours(h,m,0,0);
-          if(dt > now) break;
-          const key = dt.toISOString().slice(0,16);
-          if(!existing.has(key)){
-            const A = Math.floor(Math.random()*10);
-            const B = Math.floor(Math.random()*10);
-            const C = Math.floor(Math.random()*10);
-            saveLotteryEntry(dt, A, B, C);
-            existing.add(key);
-          }
-        }
-      }
-    }
-  });
-}
-
-/* -------------------------
-  History button handlers
---------------------------*/
-document.querySelectorAll('#satta .history-btn').forEach(btn=>{
-  btn.addEventListener('click', ()=> {
-    document.querySelectorAll('#satta .history-btn').forEach(b=>b.classList.remove('active'));
-    btn.classList.add('active');
-    const days = Number(btn.getAttribute('data-days'));
-    generateSattaHistory(days);
-  });
-});
-document.querySelectorAll('#lottery .history-btn').forEach(btn=>{
-  btn.addEventListener('click', ()=> {
-    document.querySelectorAll('#lottery .history-btn').forEach(b=>b.classList.remove('active'));
-    btn.classList.add('active');
-    const days = Number(btn.getAttribute('data-days'));
-    generateLotteryHistory(days);
-  });
-});
-
-/* Date search buttons (lottery & satta) */
-document.addEventListener('click', (e)=>{
-  if(e.target && e.target.id === 'lottery-date-search-btn'){
-    const y = Number(document.getElementById('lottery-year-select').value);
-    const m = Number(document.getElementById('lottery-month-select').value)-1;
-    const d = Number(document.getElementById('lottery-day-select').value);
-    const sdate = new Date(y,m,d);
-    generateLotteryHistory(0, sdate);
-  }
-  if(e.target && e.target.id === 'satta-date-search-btn'){
-    const y = Number(document.getElementById('satta-year-select').value);
-    const m = Number(document.getElementById('satta-month-select').value)-1;
-    const d = Number(document.getElementById('satta-day-select').value);
-    const sdate = new Date(y,m,d);
-    // also de-activate range buttons so user sees it's a date result
-    document.querySelectorAll('#satta .history-btn').forEach(b=>b.classList.remove('active'));
-    generateSattaHistory(0, sdate);
-  }
-});
-
-/* -------------------------
-  Debug function to check Firebase structure
---------------------------*/
-function debugFirebaseStructure() {
-  console.log("Checking Firebase structure...");
-  
-  // Check satta structure
-  database.ref(SATTA_PATH).once('value').then(snapshot => {
-    console.log("Satta data:", snapshot.val());
-    
-    // Check lottery structure
-  database.ref(LOTTERY_PATH).once('value').then(lotterySnapshot => {
-      console.log("Lottery data:", lotterySnapshot.val());
-    });
-  });
-}
-
-/* -------------------------
-  NEW IMPROVED DRAW SCHEDULING SYSTEM
-  - FIXED with date validation
---------------------------*/
-let lastDrawTime = null;
-
-function checkAndPerformDraw(){
-  const now = nowIST();
-  
-  // Validate date before proceeding
-  if (!isValidDate(now)) {
-    console.error('System date issue detected:', now);
-    showDateWarning('System date issue detected. Results may be inaccurate.');
-    return;
-  }
-  
-  // Only run during lottery hours (including 9:00 PM)
-  if(!isWithinLotteryHours(now)) return;
-  
-  const minutes = now.getMinutes();
-  const seconds = now.getSeconds();
-  
-  // Check if it's a draw time (every 15 minutes)
-  if(minutes % 15 === 0 && seconds < 10) { // 10-second window for draws
-    // Create a timestamp for this draw slot
-    const drawTime = new Date(now);
-    drawTime.setSeconds(0, 0);
-    const drawTimeStr = drawTime.toISOString();
-    
-    // Only perform draw if we haven't done one for this slot yet
-    if(lastDrawTime !== drawTimeStr) {
-      // Check if this draw already exists in Firebase
-      const drawKey = drawTime.toISOString().replace(/[:.]/g, '-');
-      
-      database.ref(`${LOTTERY_PATH}/${drawKey}`).once('value').then(snapshot => {
-        if (!snapshot.exists()) {
-          // Draw doesn't exist yet, perform it
-          performDraw(drawTime);
-          lastDrawTime = drawTimeStr;
-        } else {
-          // Draw already exists, just update lastDrawTime
-          lastDrawTime = drawTimeStr;
-        }
-      });
-    }
-  }
-}
-
-/* periodic refreshes */
-function startIntervals(){
-  tickAll();
-  setInterval(tickAll, 1000); // clock & countdown
-  setInterval(checkAndPerformDraw, 5000); // check for draws every 5 seconds
-  setInterval(() => { refreshCurrentFromHistory(); generateLotteryHistory(1); }, 30000); // Refresh data every 30 seconds
-}
-
-/* -------------------------
-  Timers: clock, countdown, scheduled draws
---------------------------*/
 function tickAll(){
   const now = nowIST();
-  timeEl.textContent = now.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:true });
+  if(timeEl) timeEl.textContent = now.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:true });
   updateSattaDisplay(now);
   updateCountdownAndNextTime();
   refreshCurrentFromHistory();
 }
 
-/* -------------------------
-  Init
---------------------------*/
 function init(){
-  // Debug: Check Firebase structure
-  debugFirebaseStructure();
-  
-  // Listen for real-time updates
-  database.ref(LOTTERY_PATH).orderByKey().limitToLast(1).on('value', () => {
-    refreshCurrentFromHistory();
-  });
-  
-  database.ref(SATTA_PATH).on('value', () => {
-    updateSattaDisplay(nowIST());
-    generateSattaHistory(7);
-  });
-  
-  // Initial data load
-  backfillLottery();
-  refreshCurrentFromHistory();
   generateLotteryHistory(1);
   generateSattaHistory(7);
-  populateDateDropdowns('lottery');
-  populateDateDropdowns('satta');
-  startIntervals();
+  refreshCurrentFromHistory();
+  tickAll();
+  setInterval(tickAll, 1000);
 }
-
-// Initialize after Firebase is ready
-setTimeout(init, 1000);
+window.addEventListener('DOMContentLoaded', init);
 </script>
 </body>
 </html>
