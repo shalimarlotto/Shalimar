@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Shalimar Lotto - Results</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+:root{
+  --bg1:#0b0710;
+  --bg2:#2a0b1a;
+  --accent:#ffdd00;
+  --accent-dark:#ff7300;
+  --neon:#6cf;
+  --card: rgba(255,255,255,0.05);
+  --glass: rgba(255,255,255,0.04);
+  --muted: rgba(255,255,255,0.65);
+  --danger: #ff6b6b;
+  --success: #2ecc71;
+}
+*{box-sizing:border-box;margin:0;padding:0;font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif}
+html,body{height:100%}
+body{
+  background: radial-gradient(1200px 600px at 10% 10%, rgba(255,45,85,0.06), transparent 10%),
+              radial-gradient(1000px 400px at 90% 90%, rgba(50,50,255,0.04), transparent 10%),
+              linear-gradient(135deg,var(--bg1), #19101a 40%, #200f12 100%);
+  color:#fff;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+  padding-bottom:60px;
+}
+.container{max-width:1120px;margin:0 auto;padding:18px}
+header{
+  position:sticky;top:0;z-index:40;margin-bottom:10px;
+  background: linear-gradient(180deg, rgba(0,0,0,0.45), rgba(0,0,0,0.12));
+  border-radius:12px;padding:18px;backdrop-filter: blur(8px);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+}
+.logo{ text-align:center;margin-bottom:6px }
+.logo h1{ font-size:34px; color:var(--accent); text-shadow:0 6px 22px rgba(255,221,0,0.08); letter-spacing:1px }
+.logo p{ color:var(--muted); margin-top:6px; font-size:14px }
+.tabs{ display:flex; justify-content:center; gap:18px; margin-top:12px }
+.tab-btn{
+  padding:12px 34px; border-radius:999px; font-weight:700; font-size:15px;
+  border:none; cursor:pointer; background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+  color:rgba(255,255,255,0.9); box-shadow: 0 6px 18px rgba(0,0,0,0.5); transition: all .28s ease;
+}
+.tab-btn:hover{ transform: translateY(-4px); box-shadow: 0 12px 30px rgba(0,0,0,0.6) }
+.tab-btn.active{
+  background: linear-gradient(90deg,var(--accent),var(--accent-dark));
+  color: #111827; box-shadow: 0 10px 30px rgba(255,140,0,0.12);
+}
+.current-time{
+  margin:20px auto; max-width:880px; text-align:center;
+  background: linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+  padding:12px 18px; border-radius:10px; font-size:16px;
+  display:flex; justify-content:center; align-items:center; gap:10px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+}
+.current-time i{ color:var(--accent) }
+.result-section{
+  margin-top:26px; background: linear-gradient(180deg, rgba(255,255,255,0.02), transparent);
+  border-radius:14px; padding:22px; display:none; animation: fadeIn .5s ease both;
+  box-shadow: 0 14px 40px rgba(6,6,12,0.6);
+}
+.result-section.active{ display:block }
+@keyframes fadeIn{ from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:none} }
+.section-title{ text-align:center; color:var(--accent); font-size:28px; margin-bottom:6px; text-shadow:0 6px 30px rgba(255,221,0,0.06) }
+.next-result{ text-align:center;color:var(--muted); margin-bottom:18px; font-weight:600 }
+.satta-result-container{ display:flex; flex-direction:column; align-items:center; gap:20px }
+.today-satta-result{
+  width:100%; max-width:540px; padding:22px;border-radius:14px;
+  background: linear-gradient(180deg, rgba(255,221,0,0.14), rgba(255,115,0,0.06));
+  color:#091026; text-align:center; box-shadow: 0 12px 30px rgba(255,140,0,0.06);
+}
+.today-satta-result h3{ font-size:20px; margin-bottom:8px }
+.satta-number{ font-size:64px; font-weight:900; letter-spacing:4px; margin:6px 0;
+  display:inline-block; padding:10px 22px; border-radius:10px; background:linear-gradient(90deg,#fff8d2,#ffe2a8); color:#1a2a6c; box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+  transform-origin: center;
+  animation: pop 900ms cubic-bezier(.2,.9,.2,1);
+}
+@keyframes pop{ 0%{transform:scale(.92)} 60%{transform:scale(1.02)} 100%{transform:scale(1)} }
+.satta-date{ color: rgba(0,0,0,0.6); font-weight:600; margin-top:6px }
+.history{ margin-top:26px }
+.history h3{ text-align:center; color:var(--accent); margin-bottom:12px }
+.history-table{ width:100%; border-collapse:collapse; font-size:14px; overflow:hidden; border-radius:10px; background:var(--glass) }
+.history-table th, .history-table td{ padding:10px 12px; text-align:center; border-bottom:1px solid rgba(255,255,255,0.03) }
+.history-table th{ color:var(--accent); font-weight:700; background: linear-gradient(180deg, rgba(0,0,0,0.15), transparent) }
+.empty-result{ color:var(--danger); font-style:italic }
+.history-controls{ display:flex; gap:12px; justify-content:center; margin-bottom:12px; flex-wrap:wrap }
+.history-btn{ padding:8px 16px; border-radius:999px; border:none; cursor:pointer; background: rgba(255,255,255,0.03); color:#fff; font-weight:700 }
+.history-btn.active{ background: linear-gradient(90deg,var(--accent),var(--accent-dark)); color:#111827 }
+.result-cards{ display:grid; grid-template-columns:repeat(3,1fr); gap:16px; align-items:start }
+.result-card{
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+  border-radius:12px; padding:18px; text-align:center; box-shadow: 0 10px 28px rgba(3,3,12,0.6);
+}
+.result-card h3{ color:var(--accent); margin-bottom:12px }
+.session-results{ display:flex; justify-content:center; gap:12px; align-items:center; flex-wrap:wrap }
+.session-card{ min-width:86px; border-radius:10px; padding:12px 10px; background:rgba(255,255,255,0.02) }
+.session-card h4{ color:var(--accent); margin-bottom:8px }
+.session-number{
+  font-size:36px; font-weight:800; width:56px; height:56px; display:flex; align-items:center; justify-content:center;
+  border-radius:10px; background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+  box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+  transform-style: preserve-3d;
+}
+.flip { perspective:600px; display:inline-block; }
+.flip .face {
+  display:block; border-radius:8px; min-width:56px;
+  transition: transform .5s cubic-bezier(.2,.9,.2,1);
+  transform-origin: center;
+}
+.flip.flip-in .face { transform: rotateX(-90deg); }
+.flip.flip-out .face { transform: rotateX(0deg); }
+.result-number.big { font-size:34px; font-weight:900; color:var(--accent); padding:10px 14px; border-radius:10px; background:linear-gradient(90deg, rgba(255,221,0,0.06), rgba(255,115,0,0.03)); }
+.closed-message{ text-align:center;padding:20px;border-radius:12px;background: linear-gradient(90deg, rgba(255,255,255,0.02), transparent) }
+.date-selector{ display:flex; justify-content:center; gap:8px; align-items:center; margin:12px 0; flex-wrap:wrap }
+select,input[type="date"]{ padding:8px 12px; border-radius:999px; border:none; background:rgba(255,255,255,0.03); color:#fff; font-weight:600 }
+.btn-primary{ padding:8px 14px; border-radius:999px; border:none; cursor:pointer; background: linear-gradient(90deg,var(--accent),var(--accent-dark)); color:#111827; font-weight:800 }
+footer{ margin-top:26px; text-align:center; padding:14px; color:var(--muted); font-size:13px }
+.connection-status {
+  position: fixed;
+  bottom: 10px;
+  right: 10px;
+  padding: 8px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.online { background: rgba(46, 204, 113, 0.2); color: #2ecc71; }
+.offline { background: rgba(231, 76, 60, 0.2); color: #e74c3c; }
+.connection-status i { font-size: 14px; }
+.date-warning {
+  background: rgba(231, 76, 60, 0.15);
+  border: 1px solid rgba(231, 76, 60, 0.3);
+  border-radius: 8px;
+  padding: 12px;
+  margin: 15px 0;
+  text-align: center;
+  color: #ff9e9e;
+}
+.date-warning i {
+  color: var(--danger);
+  margin-right: 8px;
+}
+@media (max-width:900px){
+  .result-cards{ 
+    grid-template-columns: 1fr; 
+    grid-template-areas: 
+      "countdown"
+      "current"
+      "previous";
+  }
+  .result-card:nth-child(1) { grid-area: countdown; order: 1; }
+  .result-card:nth-child(2) { grid-area: current; order: 2; }
+  .result-card:nth-child(3) { grid-area: previous; order: 3; }
+  .tabs{ flex-wrap:wrap; gap:10px }
+  .satta-number{ font-size:48px }
+  .session-number{ font-size:28px; width:48px; height:48px }
+}
+.loader {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 3px solid rgba(255,255,255,0.3);
+  border-radius: 50%;
+  border-top-color: var(--accent);
+  animation: spin 1s ease-in-out infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+  <div class="connection-status offline" id="connection-status">
+    <i class="fas fa-wifi"></i>
+    <span>Connecting...</span>
+  </div>
+  <header>
+    <div class="container">
+      <div class="logo">
+        <h1>SHALIMAR LOTTO</h1>
+        <p class="subtitle"><span style="color:var(--accent)">Instant Results</span> • Trusted Since 2010</p>
+      </div>
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="satta">Satta Result (4:00 PM)</button>
+        <button class="tab-btn" data-tab="lottery">Lottery Result (Every 15 min)</button>
+      </div>
+    </div>
+  </header>
+  <main class="container">
+    <div class="current-time">
+      <i class="fas fa-clock"></i>
+      <div>Current Time (IST): <strong id="time">Loading...</strong></div>
+    </div>
+    <div class="date-warning" id="date-warning" style="display: none;">
+      <i class="fas fa-exclamation-triangle"></i>
+      <span id="warning-text">System date validation issue detected. Results may be inaccurate.</span>
+    </div>
+    <!-- Satta Section -->
+    <section id="satta" class="result-section active">
+      <h2 class="section-title">Satta Results</h2>
+      <div class="next-result">Next Result: Today at <strong>4:00 PM IST</strong></div>
+      <div class="satta-result-container">
+        <div class="today-satta-result" aria-live="polite">
+          <h3>Today's Satta Result</h3>
+          <div class="satta-number" id="today-satta-number">--</div>
+          <div class="satta-date" id="satta-date">Check after 4:00 PM</div>
+        </div>
+        <div class="history">
+          <h3>Previous Results</h3>
+          <div class="history-controls">
+            <button class="history-btn active" data-days="7" id="satta-days-7">Last 7 Days</button>
+            <button class="history-btn" data-days="30">Last 30 Days</button>
+            <button class="history-btn" data-days="90">Last 90 Days</button>
+            <button class="history-btn" data-days="365">Full History (1 year)</button>
+          </div>
+          <div class="date-selector">
+            <span style="color:var(--muted)">Or select specific date:</span>
+            <select id="satta-year-select"></select>
+            <select id="satta-month-select"></select>
+            <select id="satta-day-select"></select>
+            <button id="satta-date-search-btn" class="btn-primary">Search</button>
+          </div>
+          <table class="history-table" aria-live="polite">
+            <thead>
+              <tr><th>Date</th><th>Result</th><th>Day</th></tr>
+            </thead>
+            <tbody id="satta-history"></tbody>
+          </table>
+        </div>
+        <div class="date-warning" style="margin-top: 20px;">
+          <i class="fas fa-info-circle"></i>
+          <span>Satta results are announced daily at 4:00 PM IST</span>
+        </div>
+      </div>
+    </section>
+    <!-- Lottery Section -->
+    <section id="lottery" class="result-section">
+      <h2 class="section-title">Lottery Results</h2>
+      <div class="next-result">Next Result: <strong id="next-lottery-time">Calculating...</strong></div>
+      <div id="lottery-closed-message" class="closed-message" style="display:none">
+        <h3><i class="fas fa-moon"></i> Lottery Closed</h3>
+        <p>Lottery results are available from <strong>9:00 AM</strong> to <strong>9:00 PM IST</strong>.</p>
+      </div>
+      <div id="lottery-results-container">
+        <div class="result-cards" id="lottery-live-panels">
+          <div class="result-card">
+            <h3>Current Session</h3>
+            <div class="session-results">
+              <div class="session-card">
+                <h4>A</h4>
+                <div class="session-number flip" id="flip-a"><span class="face" id="current-lottery-a">-</span></div>
+              </div>
+              <div class="session-card">
+                <h4>B</h4>
+                <div class="session-number flip" id="flip-b"><span class="face" id="current-lottery-b">-</span></div>
+              </div>
+              <div class="session-card">
+                <h4>C</h4>
+                <div class="session-number flip" id="flip-c"><span class="face" id="current-lottery-c">-</span></div>
+              </div>
+            </div>
+            <div class="result-time" style="margin-top:12px;color:var(--muted)">Updated: <span id="lottery-update-time">-</span></div>
+          </div>
+          <div class="result-card">
+            <h3>Previous Session</h3>
+            <div class="session-results">
+              <div class="session-card"><h4>A</h4><div class="session-number" id="previous-lottery-a">-</div></div>
+              <div class="session-card"><h4>B</h4><div class="session-number" id="previous-lottery-b">-</div></div>
+              <div class="session-card"><h4>C</h4><div class="session-number" id="previous-lottery-c">-</div></div>
+            </div>
+            <div class="result-time" id="previous-lottery-time" style="margin-top:12px;color:var(--muted)">-</div>
+          </div>
+          <div class="result-card">
+            <h3>Next Draw In</h3>
+            <div class="result-number big" id="countdown">--:--</div>
+            <div class="result-time" style="margin-top:10px;color:var(--muted)">Minutes : Seconds</div>
+          </div>
+        </div>
+        <div class="history" style="margin-top:18px">
+          <h3>Lottery History</h3>
+          <div class="history-controls">
+            <button class="history-btn active" data-days="1">Today</button>
+            <button class="history-btn" data-days="7">Last 7 Days</button>
+            <button class="history-btn" data-days="30">Last 30 Days</button>
+            <button class="history-btn" data-days="365">Full History (1 year)</button>
+          </div>
+          <div class="date-selector">
+            <span style="color:var(--muted)">Or select specific date:</span>
+            <select id="lottery-year-select"></select>
+            <select id="lottery-month-select"></select>
+            <select id="lottery-day-select"></select>
+            <button id="lottery-date-search-btn" class="btn-primary">Search</button>
+          </div>
+          <table class="history-table">
+            <thead>
+              <tr><th>Date</th><th>Time</th><th>Session A</th><th>Session B</th><th>Session C</th><th>Slot</th></tr>
+            </thead>
+            <tbody id="lottery-history"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+    <footer>
+      <div>© <span id="yearNow"></span> Shalimar Lotto. All rights reserved.</div>
+      <div class="disclaimer">This website is for entertainment purposes only. Please play responsibly.</div>
+    </footer>
+  </main>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
+import { getDatabase, ref, onValue, set, get } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCXh8qfMPANNwHtrxDMG6rNGAvh-dyZFQc",
+  authDomain: "database-lotto.firebaseapp.com",
+  databaseURL: "https://database-lotto-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "database-lotto",
+  storageBucket: "database-lotto.firebasestorage.app",
+  messagingSenderId: "349794805518",
+  appId: "1:349794805518:web:b37c6f4559ee1b29d0995f",
+  measurementId: "G-M5GE093GRF"
+};
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+function nowIST() {
+  const istStr = new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' });
+  return new Date(istStr);
+}
+const connectionStatus = document.getElementById('connection-status');
+const SATTA_PATH = 'satta';
+const LOTTERY_PATH = 'lottery';
+
+const timeEl = document.getElementById('time');
+const yearNow = document.getElementById('yearNow'); if(yearNow) yearNow.textContent = new Date().getFullYear();
+const dateWarning = document.getElementById('date-warning');
+const warningText = document.getElementById('warning-text');
+
+const todaySattaNumEl = document.getElementById('today-satta-number');
+const sattaDateEl = document.getElementById('satta-date');
+const sattaHistoryTbody = document.getElementById('satta-history');
+
+const nextLotteryTimeEl = document.getElementById('next-lottery-time');
+const countdownEl = document.getElementById('countdown');
+
+const currentA = document.getElementById('current-lottery-a');
+const currentB = document.getElementById('current-lottery-b');
+const currentC = document.getElementById('current-lottery-c');
+const prevA = document.getElementById('previous-lottery-a');
+const prevB = document.getElementById('previous-lottery-b');
+const prevC = document.getElementById('previous-lottery-c');
+
+const lotteryUpdateTime = document.getElementById('lottery-update-time');
+const previousLotteryTime = document.getElementById('previous-lottery-time');
+const lotteryHistoryTbody = document.getElementById('lottery-history');
+
+onValue(ref(db, '.info/connected'), (snapshot) => {
+  if(snapshot.val()) {
+    connectionStatus.className = 'connection-status online';
+    connectionStatus.innerHTML = '<i class="fas fa-wifi"></i><span>Online</span>';
+  } else {
+    connectionStatus.className = 'connection-status offline';
+    connectionStatus.innerHTML = '<i class="fas fa-wifi"></i><span>Connecting...</span>';
+  }
+});
+
+/* Tab switching */
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    const tab=btn.getAttribute('data-tab');
+    document.querySelectorAll('.result-section').forEach(sec=>sec.classList.remove('active'));
+    document.getElementById(tab).classList.add('active');
+  });
+});
+
+/* Satta display */
+function updateSattaDisplay(now){
+  const todayKey = now.toISOString().slice(0,10);
+  get(ref(db, `${SATTA_PATH}/${todayKey}`)).then(snapshot => {
+    if (snapshot.exists()) {
+      const result = snapshot.val();
+      const resultValue = typeof result === 'object' ? result.result || result.value || result.number : result;
+      if(todaySattaNumEl) todaySattaNumEl.textContent = resultValue;
+      if(sattaDateEl) sattaDateEl.textContent = now.toLocaleDateString('en-IN', { year:'numeric', month:'long', day:'numeric' });
+    } else {
+      if(todaySattaNumEl) todaySattaNumEl.textContent = 'XX';
+      if(sattaDateEl) sattaDateEl.textContent = 'Check after 4:00 PM';
+    }
+  });
+}
+
+function generateSattaHistory(days=7, specificDate=null){
+  get(ref(db, SATTA_PATH)).then(snapshot => {
+    const store = snapshot.val() || {};
+    if(sattaHistoryTbody) sattaHistoryTbody.innerHTML = '';
+    let keys = Object.keys(store).sort((a,b)=> b.localeCompare(a));
+    if(specificDate){
+      const key = specificDate.toISOString().slice(0,10);
+      keys = keys.filter(k => k === key);
+    } else {
+      keys = keys.slice(0, days);
+    }
+    if(keys.length===0){
+      if(sattaHistoryTbody) sattaHistoryTbody.innerHTML = `<tr><td colspan="3" class="empty-result">No satta results available</td></tr>`;
+      return;
+    }
+    keys.forEach(k=>{
+      const dt = new Date(k);
+      const dateStr = dt.toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' });
+      const dow = dt.toLocaleDateString('en-IN', { weekday:'short' });
+      const resultData = store[k];
+      const resultValue = typeof resultData === 'object' ? 
+        resultData.result || resultData.value || resultData.number : resultData;
+      const row = document.createElement('tr');
+      row.innerHTML = `<td>${dateStr}</td><td>${resultValue}</td><td>${dow}</td>`;
+      sattaHistoryTbody.appendChild(row);
+    });
+  });
+}
+
+function isWithinLotteryHours(now){
+  const h = now.getHours();
+  const m = now.getMinutes();
+  if (h === 21 && m < 14) return true;
+  return (h >= 9 && h < 21);
+}
+
+function nextDrawIST(now){
+  const n = new Date(now);
+  if (now.getHours() > 21 || (now.getHours() === 21 && now.getMinutes() >= 14)) {
+    const nxt = new Date(now);
+    nxt.setDate(nxt.getDate() + 1);
+    nxt.setHours(9, 0, 0, 0);
+    return nxt;
+  }
+  if(!isWithinLotteryHours(now)){
+    const nxt = new Date(now);
+    nxt.setDate(now.getDate() + 1);
+    nxt.setHours(9,0,0,0);
+    return nxt;
+  }
+  const m = now.getMinutes();
+  const nextSlotMin = Math.ceil((m+0.0001) / 15) * 15;
+  if(nextSlotMin === 60){
+    const nxt = new Date(now);
+    nxt.setHours(now.getHours()+1, 0, 0, 0);
+    return nxt;
+  } else {
+    const nxt = new Date(now);
+    nxt.setMinutes(nextSlotMin, 0, 0);
+    return nxt;
+  }
+}
+
+function flipDigit(containerId, newVal){
+  const container = document.getElementById(containerId);
+  if(!container) return;
+  const face = container.querySelector('.face') || container;
+  face.style.transform = 'rotateX(-90deg)';
+  setTimeout(()=> {
+    face.textContent = newVal;
+    face.style.transform = 'rotateX(0deg)';
+  }, 220);
+}
+
+function isResultInLotteryHours(entryDate) {
+  const h = entryDate.getHours();
+  const m = entryDate.getMinutes();
+  if (h === 21 && m < 14) return true;
+  return h >= 9 && h < 21;
+}
+
+function generateLotteryHistory(days=1, specificDate=null){
+  lotteryHistoryTbody.innerHTML = '<tr><td colspan="6"><div style="text-align:center;padding:20px"><span class="loader"></span> Loading...</div></td></tr>';
+  get(ref(db, LOTTERY_PATH)).then(snapshot => {
+    const allEntries = [];
+    if(snapshot.exists()) {
+      Object.values(snapshot.val()).forEach(entry => allEntries.push(entry));
+    }
+    const now = nowIST();
+    let filtered = [];
+    if(specificDate){
+      const key = specificDate.toISOString().slice(0,10);
+      filtered = allEntries.filter(e => {
+        const entryDate = new Date(e.dateISO);
+        return e.dateISO.slice(0,10) === key && isResultInLotteryHours(entryDate);
+      });
+    } else {
+      const start = new Date(now); 
+      start.setDate(now.getDate() - (days-1));
+      start.setHours(0,0,0,0);
+      filtered = allEntries.filter(e => {
+        const entryDate = new Date(e.dateISO);
+        return entryDate >= start && isResultInLotteryHours(entryDate);
+      });
+    }
+    filtered.sort((a, b) => new Date(b.dateISO) - new Date(a.dateISO));
+    lotteryHistoryTbody.innerHTML = '';
+    if(filtered.length === 0){
+      lotteryHistoryTbody.innerHTML = `<tr><td colspan="6" class="empty-result">No lottery results available for this period</td></tr>`;
+      return;
+    }
+    filtered.forEach(entry => {
+      const dt = new Date(entry.dateISO);
+      const istStr = dt.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' });
+      const istDate = new Date(istStr);
+      const dStr = istDate.toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' });
+      const tStr = istDate.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit', hour12:true });
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${dStr}</td><td>${tStr}</td><td>${entry.A}</td><td>${entry.B}</td><td>${entry.C}</td><td>${entry.slot}</td>`;
+      lotteryHistoryTbody.appendChild(tr);
+    });
+  });
+}
+
+function refreshCurrentFromHistory(){
+  const now = nowIST();
+  if (!isWithinLotteryHours(now)) {
+    currentA.textContent = "Closed";
+    currentB.textContent = "Closed";
+    currentC.textContent = "Closed";
+    lotteryUpdateTime.textContent = "Next draws: 9:00 AM to 9:00 PM IST";
+    prevA.textContent = "Closed";
+    prevB.textContent = "Closed";
+    prevC.textContent = "Closed";
+    previousLotteryTime.textContent = "Next draws: 9:00 AM to 9:00 PM IST";
+    return;
+  }
+  get(ref(db, LOTTERY_PATH)).then(snapshot => {
+    const entries = [];
+    if(snapshot.exists()) {
+      Object.values(snapshot.val()).forEach(entry => entries.push(entry));
+    }
+    if(entries.length === 0) return;
+    entries.sort((a, b) => new Date(b.dateISO) - new Date(a.dateISO));
+    const last = entries[0];
+    const prev = entries.length > 1 ? entries[1] : null;
+    const lastDrawTime = new Date(last.dateISO);
+    const timeDiff = (now - lastDrawTime) / (1000 * 60);
+    if (timeDiff < 30) {
+      flipDigit('flip-a', last.A);
+      flipDigit('flip-b', last.B);
+      flipDigit('flip-c', last.C);
+      currentA.textContent = last.A; 
+      currentB.textContent = last.B; 
+      currentC.textContent = last.C;
+      lotteryUpdateTime.textContent = new Date(last.dateISO).toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit', hour12:true });
+    }
+    if(prev){
+      prevA.textContent = prev.A; 
+      prevB.textContent = prev.B; 
+      prevC.textContent = prev.C;
+      previousLotteryTime.textContent = `Updated: ${new Date(prev.dateISO).toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit', hour12:true })}`;
+    }
+  });
+}
+
+function updateCountdownAndNextTime(){
+  const now = nowIST();
+  const nxt = nextDrawIST(now);
+  nextLotteryTimeEl.textContent = nxt.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit', hour12:true });
+  let diff = Math.max(0, Math.floor((nxt - now)/1000));
+  const mm = String(Math.floor(diff/60)).padStart(2,'0');
+  const ss = String(diff % 60).padStart(2,'0');
+  countdownEl.textContent = `${mm}:${ss}`;
+  const livePanels = document.getElementById('lottery-live-panels');
+  const closed = document.getElementById('lottery-closed-message');
+  if (isWithinLotteryHours(now)) {
+    if(livePanels) livePanels.style.display = 'grid';
+    closed.style.display='none';
+  } else {
+    if(livePanels) livePanels.style.display='none';
+    closed.style.display='block';
+  }
+}
+
+// --- BEGIN AUTO-GENERATION OF RESULTS ---
+
+function randomSattaNumber() {
+  return Math.floor(100 + Math.random() * 900);
+}
+
+function randomLotterySet() {
+  return {
+    A: Math.floor(Math.random() * 10),
+    B: Math.floor(Math.random() * 10),
+    C: Math.floor(Math.random() * 10),
+  };
+}
+
+function autoGenerateSattaResultIfNeeded() {
+  const ist = nowIST();
+  const isSattaTime = ist.getHours() === 16 && ist.getMinutes() >= 0 && ist.getMinutes() < 10; // 4:00 - 4:09 PM
+  const todayKey = ist.toISOString().slice(0,10);
+
+  if (!isSattaTime) return;
+  get(ref(db, `${SATTA_PATH}/${todayKey}`)).then(snapshot => {
+    if (!snapshot.exists()) {
+      const resultValue = randomSattaNumber();
+      set(ref(db, `${SATTA_PATH}/${todayKey}`), { result: resultValue, created: Date.now() });
+      console.log("Satta result auto-generated:", resultValue);
+    }
+  });
+}
+
+function autoGenerateLotteryResultIfNeeded() {
+  const ist = nowIST();
+  const h = ist.getHours();
+  const m = ist.getMinutes();
+
+  if (!((h > 8 || (h === 9 && m >= 0)) && (h < 21 || (h === 21 && m < 14)))) return;
+
+  const slotMin = Math.floor(m / 15) * 15;
+  const slotTime = new Date(ist);
+  slotTime.setMinutes(slotMin, 0, 0);
+  const slotKey = slotTime.toISOString();
+
+  get(ref(db, LOTTERY_PATH)).then(snapshot => {
+    let exists = false;
+    if (snapshot.exists()) {
+      exists = Object.values(snapshot.val()).some(entry => entry.dateISO === slotKey);
+    }
+    if (!exists) {
+      const numbers = randomLotterySet();
+      set(ref(db, `${LOTTERY_PATH}/${slotKey.replace(/\./g, '_')}`), {
+        ...numbers,
+        dateISO: slotKey,
+        slot: `${slotTime.getHours()}:${String(slotTime.getMinutes()).padStart(2, '0')}`,
+        created: Date.now()
+      });
+      console.log("Lottery result auto-generated:", numbers);
+    }
+  });
+}
+
+setInterval(() => {
+  autoGenerateSattaResultIfNeeded();
+  autoGenerateLotteryResultIfNeeded();
+}, 60000);
+
+// --- END AUTO-GENERATION OF RESULTS ---
+
+function tickAll(){
+  const now = nowIST();
+  if(timeEl) timeEl.textContent = now.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:true });
+  updateSattaDisplay(now);
+  updateCountdownAndNextTime();
+  refreshCurrentFromHistory();
+}
+
+function init(){
+  generateLotteryHistory(1);
+  generateSattaHistory(7);
+  refreshCurrentFromHistory();
+  tickAll();
+  setInterval(tickAll, 1000);
+}
+window.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
